@@ -23,42 +23,11 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 
 ## Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/steipete/claude-code-mcp.git
-    cd claude-code-mcp
-    ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Configure MCP:**
-    Ensure your `~/.codeium/windsurf/mcp_config.json` (or equivalent Codeium MCP configuration file) includes an entry for this server. The `claude_code` MCP server uses the `stdio` type.
+This MCP server is designed to be easily run via `npx` if published to NPM, which simplifies setup by not requiring you to clone the repository.
 
-    ```json
-    {
-      "mcpServers": {
-        "claude_code": {
-          "type": "stdio",
-          "command": "/path/to/your/claude-code-mcp/start.sh", // <-- IMPORTANT: Use absolute path
-          "args": []
-        }
-        // ... other MCP server configurations
-      }
-    }
-    ```
-    Replace `/path/to/your/claude-code-mcp/start.sh` with the absolute path to the `start.sh` script in your cloned repository.
+### Recommended Setup: Using NPX (If Published)
 
-4.  **Permissions for Claude CLI (First-Time Setup):**
-    The `start.sh` script attempts to run the Claude CLI (e.g., `claude`) with the `--dangerously-skip-permissions` flag. For this to work the first time you run `claude` or if permissions haven't been granted, you might need to run the Claude CLI manually once from your terminal with this flag to accept any necessary permissions or setup steps it requires:
-    ```bash
-    claude --dangerously-skip-permissions query "What is the capital of France?"
-    ```
-    Alternatively, ensure the Claude CLI is configured to allow non-interactive execution with these permissions. Refer to your Claude CLI documentation for details.
-
-### Alternative: NPX-Based Setup (If Published)
-
-Many MCP servers simplify setup by being published to NPM and run via `npx`. If this `claude-mcp-server` were published to NPM (e.g., as `@your-npm-username/claude-mcp-server`), its configuration in `mcp_config.json` could look like this:
+If this server is published to NPM (e.g., as `@your-npm-username/claude-mcp-server`), you can configure it in your `~/.codeium/windsurf/mcp_config.json` (or equivalent MCP configuration file) like this:
 
 ```json
 {
@@ -68,39 +37,44 @@ Many MCP servers simplify setup by being published to NPM and run via `npx`. If 
       "command": "npx",
       "args": [
         "-y",
-        "@your-npm-username/claude-mcp-server@latest"
+        "@your-npm-username/claude-mcp-server@latest" // Replace with actual package name if published
       ]
-      // Potentially 'env' vars if the npx package requires API keys, etc.
+      // Ensure any required API keys or environment variables are set up
+      // as per the package's documentation if it needs them.
     }
     // ... other MCP server configurations
   }
 }
 ```
+This `npx` approach handles fetching and running the package. Always use the specific package name once it's published.
 
-This `npx` approach means you wouldn't need to clone the repository and point to a local script. `npx` would handle fetching and running the package.
+**Note on Claude CLI Permissions for NPX Setup:**
+Even when run via NPX, the underlying Claude CLI will require its initial permissions to be accepted. If you encounter issues, try running the Claude CLI manually once with the `--dangerously-skip-permissions` flag (e.g., `claude --dangerously-skip-permissions query "Test"`).
 
-**For current local development and usage of this repository, the `start.sh` method detailed above is the recommended approach.** The `npx` example is provided for illustrative purposes, anticipating a potential future where the server is distributed as an NPM package.
+### Alternative: Local Installation & Development Setup
 
-## Connecting to Cursor/Windsurf/Visual Studio Code
+For local development, contributing to this server, or if you prefer to run directly from a cloned repository using `start.sh`, please refer to the detailed instructions in:
 
-To connect this MCP server to your client (like Cursor, a Windsurf-enabled VS Code, etc.), you need to add its configuration to your MCP JSON file.
+➡️ **[Local Installation & Development Setup Guide (docs/local_install.md)](docs/local_install.md)**
 
-### macOS
+## Connecting to Windsurf/Codeium
 
-1.  The typical MCP configuration file path is `~/.cursor/mcp.json` (for older Cursor setups) or `~/.codeium/windsurf/mcp_config.json` (for newer Codeium/Windsurf setups). Create this file if it doesn't exist.
-2.  Add the server configuration to this file as detailed in **Step 3 of the main `## Setup` section** above. Ensure you use the absolute path to the `start.sh` script.
+To connect this MCP server to your Windsurf/Codeium client (like Windsurf Editor or a Windsurf-enabled VS Code), you need to add its configuration to your MCP JSON file.
 
-### Windows
+**MCP Configuration File Path:**
+The standard path for the MCP configuration file is:
+*   `~/.codeium/windsurf/mcp_config.json`
 
-1.  The typical MCP configuration file path is `%USERPROFILE%\.cursor\mcp.json` or `%USERPROFILE%\.codeium\windsurf\mcp_config.json`.
-2.  Add the server configuration as detailed in **Step 3 of the main `## Setup` section**, using the absolute path to `start.sh`.
+This path is generally used across macOS, Linux (where `~` is your home directory), and Windows (where `~` typically expands to `%USERPROFILE%`).
 
-### Linux
+**Configuration Steps:**
 
-1.  The typical MCP configuration file path is `~/.config/Code - OSS/mcp_config.json`, `~/.config/VSCodium/mcp_config.json`, `~/.config/cursor/mcp.json`, or `~/.codeium/windsurf/mcp_config.json` depending on your VS Code flavor or client.
-2.  Add the server configuration as detailed in **Step 3 of the main `## Setup` section**, using the absolute path to `start.sh`.
-
-Ensure the client application (Cursor, VS Code) is restarted after modifying the MCP configuration file for changes to take effect.
+1.  Locate or create your `~/.codeium/windsurf/mcp_config.json` file.
+2.  Add the server configuration to this file.
+    *   If using the **NPX setup** (recommended), refer to the JSON example in the main `## Setup` section above.
+    *   If using the **Local Installation & Development Setup**, refer to the JSON example in the [Local Installation & Development Setup Guide (docs/local_install.md)](docs/local_install.md).
+    Ensure you use the correct `command` and `args` as detailed for your chosen setup method.
+3.  Restart your client application (Windsurf, VS Code) after modifying the MCP configuration file for changes to take effect.
 
 ## Usage
 
@@ -138,6 +112,23 @@ Example prompt snippet demonstrating this:
 ```
 
 This multi-step approach ensures the integrity and accurate transmission of large text inputs.
+
+---
+**Pro Tip for Complex Inputs (e.g., multi-line text with backticks ` `):**
+When your prompt to the `code` tool needs to include multi-line text that contains special characters (like backticks or quotes) which might cause issues if directly embedded (e.g., for a GitHub PR body, or when asking the tool to edit a file with complex content):
+
+1.  **First, instruct the `code` tool to write your complex text to a *separate temporary file*.**
+    *   Example: `"Write the following exact content to /tmp/my_complex_text.txt:\nThis is line one with a \`backtick\`.\nThis is line two."`
+
+2.  **Then, in the *same prompt*, instruct the `code` tool to use the content of that temporary file for its main operation.**
+    *   Example for editing a target file: `"Then, in the file src/target_file.js, replace the placeholder '%%COMPLEX_TEXT%%' with the entire content of /tmp/my_complex_text.txt."`
+    *   Example for a command using the file: `"Then run the command: gh pr edit 123 --body-file /tmp/my_complex_text.txt"`
+
+3.  **Finally, instruct the `code` tool to delete the temporary file.**
+    *   Example: `"Then delete /tmp/my_complex_text.txt"`
+
+This method avoids issues with escaping special characters within the prompt itself and is highly recommended for reliability when dealing with complex string literals or multi-step commands passed to the `code` tool.
+---
 
 `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.
 
