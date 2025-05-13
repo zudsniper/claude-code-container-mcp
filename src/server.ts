@@ -12,6 +12,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve as pathResolve } from 'node:path';
+import packageJson from '../package.json' with { type: 'json' }; // Import package.json with attribute
 
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
@@ -115,11 +116,13 @@ async function spawnAsync(command: string, args: string[], options?: { timeout?:
 class ClaudeCodeServer {
   private server: Server;
   private claudeCliPath: string; // This now holds either a full path or just 'claude'
+  private packageVersion: string; // Add packageVersion property
 
   constructor() {
     // Use the simplified findClaudeCli function
     this.claudeCliPath = findClaudeCli(debugMode);
     console.error(`[Setup] Using Claude CLI command/path: ${this.claudeCliPath}`);
+    this.packageVersion = packageJson.version; // Access version directly
 
     this.server = new Server(
       {
@@ -194,7 +197,9 @@ The server **does NOT automatically inject 'Your work folder is...'** into your 
 
 **Prompting Best Practices:** The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
 
-**Advanced Usage Tip:** When working with the \\\`code\\\` tool, you can set up complex workflows by using explicit step-by-step instructions. For example, instead of just asking \\\`"Fix the bugs in my code"\\\`, try: \\\`"Your work folder is /path/to/project\\n\\n1. Run the test suite to identify failing tests\\n2. Examine the failing tests to understand what's breaking\\n3. Check the relevant source files and fix the issues\\n4. Run the tests again to verify your fixes worked\\n5. Explain what you changed and why"\\\``,
+**Advanced Usage Tip:** When working with the \`code\` tool, you can set up complex workflows by using explicit step-by-step instructions. For example, instead of just asking \`"Fix the bugs in my code"\`, try: \`"Your work folder is /path/to/project\\n\\n1. Run the test suite to identify failing tests\\n2. Examine the failing tests to understand what's breaking\\n3. Check the relevant source files and fix the issues\\n4. Run the tests again to verify your fixes worked\\n5. Explain what you changed and why"\`.
+\n\n**Pro Tip for Complex Inputs (e.g., multi-line text with backticks \`):**\nWhen your prompt needs to include multi-line text that contains special characters (like backticks or quotes) which might cause issues if directly embedded (e.g., for a GitHub PR body or editing this server's own source code):\n1.  First, instruct this \`code\` tool to write your complex text to a *separate temporary file*. For example: \`"Write the following exact content to /tmp/my_complex_text.txt:\\nThis is line one with a \\\`backtick\\\`.\\nThis is line two."\`\n2.  Then, in the *same prompt*, instruct the \`code\` tool to use the content of that temporary file for its main operation (e.g., editing a target file, or using it as a command argument). For instance: \`"Then, in the file src/target_file.js, replace the placeholder '%%COMPLEX_TEXT%%' with the entire content of /tmp/my_complex_text.txt."\` Or, for a command: \`"Then run the command: gh pr edit 123 --body-file /tmp/my_complex_text.txt"\`\n3.  Finally, instruct the \`code\` tool to delete the temporary file: \`"Then delete /tmp/my_complex_text.txt"\`\nThis method avoids issues with escaping special characters within the prompt itself and is highly recommended for reliability when dealing with complex string literals or multi-step commands.
+        `,
           inputSchema: {
             type: 'object',
             properties: {
@@ -210,50 +215,51 @@ The server **does NOT automatically inject 'Your work folder is...'** into your 
     }));
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<ServerResult> => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (req): Promise<ServerResult> => {
       try {
+        console.error(`[Claude Call] Using claude-code-mcp version: ${this.packageVersion}`);
+
+        const toolName = req.params.name;
+
+        if (toolName !== 'code' && toolName !== 'claude') {
+          console.error(`[Error] Tool name mismatch. Expected 'code' or 'claude', got: '${toolName}'`);
+          console.error(`[Error] Tool request processing failed : MCP error -32601: Tool ${toolName} not found`);
+          throw new McpError(ErrorCode.MethodNotFound, `Tool ${toolName} not found`);
+        }
+
         let claudePrompt: string;
         const baseCommandArgs: string[] = ['--dangerously-skip-permissions'];
         let finalCommandArgs: string[];
 
-        const toolNameForLogging = request.params.toolName; // Use toolName from schema
-
         // Validate and construct the prompt based on the tool
-        if (request.params.toolName === 'code') { // Only 'code' tool remains
-          const args = request.params.arguments as unknown as ClaudeCodeArgs;
-          if (!args.prompt) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
-          claudePrompt = args.prompt;
+        const args = req.params.arguments as unknown as ClaudeCodeArgs; // Correctly access arguments
+        if (!args || !args.prompt) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
+        claudePrompt = args.prompt;
 
-          if (debugMode) { 
-            console.error(`[Code Tool] Claude Prompt(direct from user): ${claudePrompt}`); 
-          }
-
-          finalCommandArgs = [...baseCommandArgs];
-          finalCommandArgs.push('-p', claudePrompt);
-
-        } else {
-          // Unknown tool - this case should ideally not be hit if ListTools is accurate
-          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.toolName} not found`);
+        if (debugMode) { 
+          console.error(`[Code Tool] Claude Prompt(direct from user): ${claudePrompt}`); 
         }
+
+        finalCommandArgs = [...baseCommandArgs];
+        finalCommandArgs.push('-p', claudePrompt);
 
         // Unified execution logic
         try {
-          const { stdout } = await spawnAsync(this.claudeCliPath, finalCommandArgs);
+          const { stdout, stderr } = await spawnAsync(this.claudeCliPath, finalCommandArgs, { timeout: 60000 }); // 60-second timeout
           if (debugMode) {
-            console.debug(`Claude CLI stdout(${toolNameForLogging}, plain text):`, stdout);
+            console.error(`Claude CLI stdout(code, plain text):`, stdout); 
           }
           return { content: [{ type: 'text', text: stdout }] };
         } catch (error) {
-          let errorMessage = `Unknown error during Claude CLI execution for tool ${toolNameForLogging}`;
+          let errorMessage = `Unknown error during Claude CLI execution for tool ${toolName}`;
           if (error instanceof Error) {
             errorMessage = error.message;
           }
-          console.error(`[Error] Tool execution failed(${toolNameForLogging}): ${errorMessage}`);
+          console.error(`[Error] Tool execution failed(${toolName}): ${errorMessage}`);
           if (error instanceof McpError) {
             throw error; // Re-throw existing McpError
           }
-          // Wrap other errors as InternalError
-          throw new McpError(ErrorCode.InternalError, `Tool execution failed(${toolNameForLogging}): ${errorMessage}`);
+          throw new McpError(ErrorCode.InternalError, `Tool execution failed(${toolName}): ${errorMessage}`);
         }
 
       } catch (error) { // Catch errors from prompt construction or if an McpError was thrown above
@@ -262,12 +268,11 @@ The server **does NOT automatically inject 'Your work folder is...'** into your 
           errorMessage = error.message;
         }
         // Ensure toolNameForLogging is available or use a generic message
-        const toolContext = request.params.toolName ? `for tool ${request.params.toolName}` : '';
+        const toolContext = req.params.name ? `for tool ${req.params.name}` : ''; // Use req.params.name here too
         console.error(`[Error] Tool request processing failed ${toolContext}: ${errorMessage}`);
         if (error instanceof McpError) {
           throw error; // Re-throw existing McpError
         }
-        // Wrap other errors as InternalError
         throw new McpError(ErrorCode.InternalError, `Tool request processing failed ${toolContext}: ${errorMessage}`);
       }
     });
