@@ -15,7 +15,7 @@ This MCP server provides two tools that can be used by LLMs to interact with Cla
 
 - Node.js v16 or later
 - TypeScript (for development)
-- Claude CLI installed and working
+- Claude CLI installed and working. Ensure Claude CLI is installed and accessible, preferably by running `/doctor`. This installs/updates the CLI to `~/.claude/local/claude`, which this server checks by default.
 
 ## Installation
 
@@ -26,19 +26,13 @@ git clone https://github.com/yourusername/claude-mcp-server.git
 cd claude-mcp-server
 ```
 
-2. Install dependencies:
+2. Install dependencies (this will also install `tsx` for direct TypeScript execution):
 
 ```bash
 npm install
 ```
 
-3. Build the TypeScript code:
-
-```bash
-npm run build
-```
-
-4. Make the start script executable:
+3. Make the start script executable:
 
 ```bash
 chmod +x start.sh
@@ -120,17 +114,15 @@ For Windows, you should use the batch file (start.bat) instead of the shell scri
 
 ## Environment Variables
 
-You can customize the server behavior with the following environment variables (edit them in start.sh):
+You can customize the server behavior with the following environment variables (edit them in `start.sh` or `start.bat`):
 
-- `CLAUDE_CLI_PATH`: Set a custom path to the Claude CLI executable
+- `CLAUDE_CLI_PATH`: **Optional.** Set a custom absolute path to the Claude CLI executable. If set and the path points to an existing file, this path will be used directly.
+- `MCP_CLAUDE_DEBUG`: Set to `true` to enable verbose debug logging from the server to stderr (e.g., `MCP_CLAUDE_DEBUG=true ./start.sh`).
 
-If not specified, the server will attempt to find the Claude CLI in common locations:
-- `~/.claude/local/claude`
-- `~/.local/bin/claude`
-- `~/bin/claude`
-- `/usr/local/bin/claude`
-- `/usr/bin/claude`
-- `claude` (in PATH)
+**Claude CLI Discovery Order:**
+1.  The path specified by the `CLAUDE_CLI_PATH` environment variable (if set and valid).
+2.  The default installation path: `~/.claude/local/claude` (where `~` is the user's home directory).
+3.  Defaults to simply `claude`, relying on the system's PATH for resolution (a warning will be logged if this fallback is used).
 
 ## Connecting to VSCode Claude
 
@@ -161,25 +153,31 @@ To use this MCP server with Claude in VSCode:
 
 Once installed and connected to an MCP client, you can invoke the tools using the following formats:
 
-### Claude Code Tool
+### Claude Code Tool (renamed to `code`)
 
 ```json
 {
-  "prompt": "Your prompt to Claude Code here",
-  "options": {
-    "tools": ["Bash", "Read", "Write"]
+  "tool_name": "code",
+  "params": {
+    "prompt": "Your prompt to Claude Code here",
+    "options": {
+      "tools": ["Bash", "Read", "Write"]
+    }
   }
 }
 ```
 
 If no tools are specified, the server enables common tools by default.
 
-### Claude File Edit Tool
+### Claude File Edit Tool (renamed to `magic_file`)
 
 ```json
 {
-  "file_path": "/path/to/your/file.js",
-  "instruction": "Add a new function that calculates the fibonacci sequence"
+  "tool_name": "magic_file",
+  "params": {
+    "file_path": "/path/to/your/file.js",
+    "instruction": "Refactor the processData function to use async/await instead of promises."
+  }
 }
 ```
 
@@ -187,26 +185,30 @@ If no tools are specified, the server enables common tools by default.
 
 The server provides two tools:
 
-1. **Tool name**: `claude_code`
-   - **Description**: "Claude Code is an AI that has system tools to edit files, search the web and access mcp tools can do basically anything as it is an AI. It can modify files, fix bugs, and refactor code across your entire project."
+1. **Tool name**: `code`
+   - **Description**: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for complex code generation, analysis, refactoring, or general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., Bash, Read, Write); common tools are enabled by default if this is omitted."
    - **Parameters**:
      - `prompt` (required): The prompt to send to Claude Code
      - `options.tools` (optional): Array of specific tools to enable
-   - **Implementation**: Uses `claude --dangerously-skip-permissions` to bypass all permission checks
+   - **Implementation**: Uses `claude --dangerously-skip-permissions` (invoked via `child_process.spawn`) to bypass all permission checks. The server locates the Claude CLI by first checking the `CLAUDE_CLI_PATH` environment variable, then looking in `~/.claude/local/claude`, and finally falling back to `claude` in the system PATH.
 
-2. **Tool name**: `claude_file_edit`
-   - **Description**: "Edit any file with a free text description. Is your edit_file tool not working again? Tell me what file and the contents and I'll figure it out!"
+2. **Tool name**: `magic_file`
+   - **Description**: "Edits a specified file based on natural language instructions, leveraging the Claude Code CLI with all editing permissions bypassed (`--dangerously-skip-permissions`). Best for complex or semantic file modifications where describing the desired change in plain language is more effective than precise line-by-line edits. Requires an absolute `file_path` and a descriptive `instruction`. Also a great alternative if a general-purpose `edit_file` tool is struggling with complex edits or specific file types. Example instruction: 'Refactor the processData function to use async/await instead of promises.'"
    - **Parameters**:
      - `file_path` (required): The absolute path to the file to edit
      - `instruction` (required): Free text description of the edits to make to the file
-   - **Implementation**: Uses `claude --dangerously-skip-permissions` with Edit tools enabled
+   - **Implementation**: Uses `claude --dangerously-skip-permissions` (invoked via `child_process.spawn`) with Edit tools enabled. The server locates the Claude CLI by first checking the `CLAUDE_CLI_PATH` environment variable, then looking in `~/.claude/local/claude`, and finally falling back to `claude` in the system PATH.
 
 ## Troubleshooting
 
-- **Tool not showing up**: Check the Claude logs for errors when starting the MCP server.
-- **Command not found**: Ensure Claude CLI is installed and available in one of the search paths.
-- **Permission errors**: Ensure the start.sh script is executable.
+- **Tool not showing up**: Check the Claude logs for errors when starting the MCP server. Ensure `start.sh` or `start.bat` is executable and `tsx` is installed and runnable (usually via `npx`).
+- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set) or at the default location (`~/.claude/local/claude`). If the server falls back to using just `'claude'`, the `ENOENT` error will occur if it's also not found in the system PATH accessible to the Node.js process. 
+    - Ensure the Claude CLI is installed correctly, either at `~/.claude/local/claude` or in a location included in your system's PATH.
+    - Alternatively, explicitly set the `CLAUDE_CLI_PATH` environment variable in `start.sh` or `start.bat` to the correct absolute path of your `claude` executable.
+- **Permission errors**: Ensure the `start.sh` script is executable and that Node.js has permission to execute `tsx` and the Claude CLI (whether found via `CLAUDE_CLI_PATH`, the default path, or the system PATH).
 
 ## License
 
 MIT
+
+Server test complete.
