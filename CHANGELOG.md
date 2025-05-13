@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.0] - 2025-05-13
+
+### Fixed
+- Resolved issues preventing the package from working correctly as a globally linked `npm` command (`npm link claude-code-mcp`).
+  - Added `bin` field to `package.json`.
+  - Ensured executable script (`dist/server.js`) has the correct shebang (`#!/usr/bin/env node`).
+- Fixed ES Module JSON import issues for `package.json` when running as a global command.
+  - Updated `tsconfig.json` `compilerOptions.module` and `moduleResolution` to `NodeNext`.
+  - Changed `package.json` import in `src/server.ts` to use `with { type: 'json' }` attribute.
+- Ensured all server-side logging (debug, errors) goes to `stderr` to prevent corruption of MCP `stdout` JSON responses.
+- Corrected `command` field in `mcp_config.json` examples/guidance to be an array (`["claude-code-mcp"]`) for `stdio` servers.
+
+### Changed
+- Default `MCP_CLAUDE_DEBUG` in `start.sh` to `false` for cleaner default operation.
+- Removed redundant/unused `this.debugMode` property from `ClaudeCodeServer` class.
+- Minor cleanup of debug logging in `src/server.ts`.
+
 ## [1.4.0] - 2025-05-13
 
 ### Changed
