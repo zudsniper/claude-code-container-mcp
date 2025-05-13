@@ -113,68 +113,63 @@ Example prompt snippet demonstrating this:
 
 This multi-step approach ensures the integrity and accurate transmission of large text inputs.
 
----
-**Pro Tip for Complex Inputs (e.g., multi-line text with backticks ` `):**
-When your prompt to the `code` tool needs to include multi-line text that contains special characters (like backticks or quotes) which might cause issues if directly embedded (e.g., for a GitHub PR body, or when asking the tool to edit a file with complex content):
+#### Common Use Cases & Examples:
 
-1.  **First, instruct the `code` tool to write your complex text to a *separate temporary file*.**
-    *   Example: `"Write the following exact content to /tmp/my_complex_text.txt:\nThis is line one with a \`backtick\`.\nThis is line two."`
+Remember to always start your prompt with `Your work folder is /path/to/your/project` to set the correct context for Claude.
 
-2.  **Then, in the *same prompt*, instruct the `code` tool to use the content of that temporary file for its main operation.**
-    *   Example for editing a target file: `"Then, in the file src/target_file.js, replace the placeholder '%%COMPLEX_TEXT%%' with the entire content of /tmp/my_complex_text.txt."`
-    *   Example for a command using the file: `"Then run the command: gh pr edit 123 --body-file /tmp/my_complex_text.txt"`
+1.  **Editing Files:**
+    *   Change a variable:
+        *   `"Your work folder is /Users/steipete/my-project\n\nIn 'src/components/Button.js', change the default button color from 'blue' to 'green'."`
+    *   Add a new function:
+        *   `"Your work folder is /Users/steipete/my-project\n\nAdd a new JavaScript function to 'utils/helpers.js' that takes two numbers and returns their product. Name the function 'multiplyNumbers'."`
 
-3.  **Finally, instruct the `code` tool to delete the temporary file.**
-    *   Example: `"Then delete /tmp/my_complex_text.txt"`
+2.  **Running Shell Commands:**
+    *   Install a package:
+        *   `"Your work folder is /Users/steipete/my-project\n\nRun the command 'npm install react-router-dom'."`
+    *   Check git status:
+        *   `"Your work folder is /Users/steipete/my-project\n\nExecute 'git status' and tell me the output."`
 
-This method avoids issues with escaping special characters within the prompt itself and is highly recommended for reliability when dealing with complex string literals or multi-step commands passed to the `code` tool.
----
+3.  **Generating New Files:**
+    *   Create a new Python file with a class:
+        *   `"Your work folder is /Users/steipete/my-project\n\nCreate a new Python file named 'data_processor.py'. Add a class 'Processor' with an empty '__init__' method."`
+
+4.  **Code Refactoring & Analysis:**
+    *   Refactor to async/await:
+        *   `"Your work folder is /Users/steipete/my-project\n\nRefactor the function 'getUserData' in 'api/user.js' to use async/await instead of Promises."`
+    *   Request a security analysis:
+        *   `"Your work folder is /Users/steipete/my-project\n\nAnalyze 'services/auth.js' for potential security vulnerabilities and suggest improvements."`
+
+5.  **Multi-step Tasks (Combining Operations):**
+    *   Read config, update a file, add a comment, lint, and explain:
+        ```text
+        Your work folder is /Users/steipete/my-project
+
+        1. Read the content of 'config/settings.json'.
+        2. In 'src/app.js', find the line that initializes 'API_ENDPOINT' and update its value to the 'api_url' found in 'config/settings.json'.
+        3. Add a comment above this line explaining where the API endpoint value comes from.
+        4. Run 'npm run lint -- --fix' to format the changes.
+        5. Explain the changes you made.
+        ```
+
+6.  **Interacting with Version Control (Git):**
+    *   Stage and commit changes:
+        *   `"Your work folder is /Users/steipete/my-project\n\nStage all changes in 'src/' and commit them with the message 'Feat: Implement user profile page'."`
+
+7.  **Interacting with GitHub (e.g., Checking PR CI Status):**
+    *   Check CI status for a PR:
+        ```text
+        Your work folder is /Users/steipete/my_project
+
+        1. Check CI status for PR #123 in the repository 'steipete/claude-code-mcp'.
+        2. Report back if it's green or red.
+        ```
+
+**Prompting Best Practices:**
+*   **Be Specific:** The more detailed and clear your prompt, the better.
+*   **Context is Key:** Always provide the `Your work folder is ...` line.
+*   **Numbered Steps:** For complex tasks, break them down into numbered steps within the prompt. This helps Claude understand and execute your intent effectively.
 
 `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.
-
-#### Example: Complex Multi-step Task
-
-The `code` tool can handle surprisingly complex, multi-step instructions. For instance, the following prompt was used successfully to identify screenshots on the desktop, copy them to the project, update this README with the new images and captions, and then stage, commit, and push all related changes (including a `package.json` update) to GitHub, all in one go:
-
-```text
-Your work folder is /Users/steipete/Projects/claude-mcp/mcp-server/
-
-Here's a multi-step task:
-1.  Identify two screenshot image files on the user's desktop located at /Users/steipete/Desktop/. One is an existing screenshot, likely named something like 'cursor-screenshot.png' or related to Cursor IDE. The other is a newer screenshot depicting an AI tool (like Cascade) using another tool for git operations.
-2.  Copy these two identified screenshot files into the current project directory (/Users/steipete/Projects/claude-mcp/mcp-server/). Ensure the one related to Cursor is named `cursor-screenshot.png`. Name the new screenshot (showing the AI tool and git operations) as `claude_tool_git_example.png`.
-3.  Modify the `README.md` file in the project directory. In the '## Example Screenshots' section:
-    a.  Ensure there's an entry for `cursor-screenshot.png` (e.g., `<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">`).
-    b.  Add a new entry for `claude_tool_git_example.png`. It should be an image tag like `<img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">` followed by the caption on a new line: "Tools seem to prefer it even for git operations as it runs faster and in one shot."
-4.  Stage the following files for a git commit: `README.md`, `cursor-screenshot.png`, `claude_tool_git_example.png`, and `package.json`.
-5.  Commit the staged changes with the message: "docs: add example screenshots and update dependencies".
-6.  Push the commit to the default remote repository (origin) and the current branch (likely main).
-```
-
-7.  **Repairing Files with Syntax Errors:**
-    - 
-      ```
-      "Your work folder is /path/to/project
-
-      The file 'src/utils/parser.js' has syntax errors after a recent complex edit that broke its structure. Please analyze it, identify the syntax errors, and correct the file to make it valid JavaScript again, ensuring the original logic is preserved as much as possible."
-      ```
-
-8.  **Interacting with GitHub (e.g., Creating a Pull Request):**
-    - 
-      ```
-      "Your work folder is /Users/steipete/my_project
-
-      Create a GitHub Pull Request in the repository 'owner/repo' from the 'feature-branch' to the 'main' branch. Title: 'feat: Implement new login flow'. Body: 'This PR adds a new and improved login experience for users.'"
-      ```
-
-9.  **Interacting with GitHub (e.g., Checking PR CI Status):**
-    - 
-      ```
-      "Your work folder is /Users/steipete/my_project
-
-      Check the status of CI checks for Pull Request #42 in the GitHub repository 'owner/repo'. Report if they have passed, failed, or are still running."
-      ```
-
-**Prompting Best Practices:** The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
 
 ## Tool Descriptions
 
