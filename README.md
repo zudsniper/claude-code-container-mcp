@@ -18,368 +18,143 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 ## Prerequisites
 
 - Node.js v20 or later (due to ES Module features like JSON import attributes being used).
-- TypeScript (for development)
 - Claude CLI installed and working. Ensure Claude CLI is installed and accessible, preferably by running `claude/doctor`. This installs/updates the CLI to `~/.claude/local/claude`, which this server checks by default.
 
-## Installation
+## Installation & Usage
 
-There are two main ways to install and use this server:
+The recommended way to use this server is by installing it globally via NPM or by using `npx`.
 
-**Option 1: As a Global NPM Package (Recommended for Simplicity)**
+**1. Global Installation (Recommended)**
 
-This method makes the server available as a system-wide command, `claude-code-mcp`.
-
-1.  **From NPM (once published):**
-    ```bash
-    npm install -g claude-mcp-server
-    ```
-2.  **For local development (linking your cloned repository):**
-    Clone this repository, then navigate into its directory and run:
-    ```bash
-    git clone https://github.com/yourusername/claude-mcp-server.git # Or your fork
-    cd claude-mcp-server
-    npm install       # Install dependencies
-    npm run build     # Compile TypeScript
-    npm link          # Make it available globally from your local source
-    ```
-    After linking, `claude-code-mcp` will point to your local build.
-
-**Option 2: Running from a Cloned Repository (using `start.sh`)**
-
-This method is suitable if you prefer not to install it globally or want to manage it directly within a specific path.
-
-1. Clone or download this repository:
-
+Install the package globally using NPM:
 ```bash
-git clone https://github.com/yourusername/claude-mcp-server.git
-cd claude-mcp-server
+npm install -g claude-mcp-server
 ```
+This makes the `claude-code-mcp` command available system-wide.
 
-2. Install dependencies (this will also install `tsx` for direct TypeScript execution):
+**2. Using with `npx` (No Global Install Needed)**
 
+You can run the server directly using `npx` without a global installation:
 ```bash
-npm install
+npx claude-mcp-server
 ```
+This is convenient for one-off uses or to ensure you're always running the latest version of the server. The server will be downloaded and run without polluting your global namespace.
 
-3. Make the start script executable:
+**For Developers: Local Setup & Contribution**
 
-```bash
-chmod +x start.sh
-```
+If you want to develop or contribute to this server, or run it from a cloned repository for testing, please see our [Local Installation & Development Setup Guide](./docs/local_install.md).
 
 ## Important First-Time Setup: Accepting Permissions
 
 **Before the MCP server can successfully use the `code` tool, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
 
 This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
-
 ```bash
 claude -p "hello" --dangerously-skip-permissions
 ```
-
 Or, if `claude` is not in your PATH but you're using the default install location:
-
 ```bash
 ~/.claude/local/claude -p "hello" --dangerously-skip-permissions
 ```
-
 Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
 
 ## Connecting to Cursor/Windsurf/Visual Studio Code
 
-After installation, you need to tell your MCP client (like Cursor) about this server.
+After setting up the server, you need to configure your MCP client (like Cursor).
 
-### macOS
+### MCP Configuration (`mcp.json`)
 
-1. Locate the MCP configuration file:
-   ```
-   ~/.cursor/mcp.json
-   ```
-   Or for Windsurf installations of Cursor:
-   ```
-   ~/.codeium/windsurf/mcp_config.json 
-   ```
-   Create this file if it doesn't exist.
+Locate your `mcp.json` file. Common locations:
+- **macOS:** `~/.cursor/mcp.json` or `~/.codeium/windsurf/mcp_config.json`
+- **Windows:** `%APPDATA%\\Cursor\\mcp.json` or `%APPDATA%\\Codeium\\windsurf\\mcp_config.json`
+- **Linux:** `~/.config/cursor/mcp.json` or `~/.config/.codeium/windsurf/mcp_config.json`
 
-2. Add the server configuration. 
+Create this file if it doesn't exist. Add or update the configuration for `claude_code`:
 
-   **If installed globally (Option 1):**
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["claude-code-mcp"],
-         "args": [],
-         "env": {
-           "MCP_CLAUDE_DEBUG": "false"
-         }
-       }
-     }
-   }
-   ```
-
-   **If running from cloned repository (Option 2 using `start.sh`):**
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["/absolute/path/to/claude-mcp-server/start.sh"],
-         "args": []
-       }
-     }
-   }
-   ```
-   Make sure to replace `/absolute/path/to/claude-mcp-server` with the actual path to where you cloned the server.
-
-### Windows
-
-1. Locate the MCP configuration file (path may vary slightly based on Cursor version):
-   ```
-   %APPDATA%\Cursor\mcp.json
-   ```
-   Or for Windsurf installations of Cursor:
-   ```
-   %APPDATA%\Codeium\windsurf\mcp_config.json
-   ```
-   Create this file if it doesn't exist.
-
-2. Add the server configuration. Windows path format is important.
-
-   **If installed globally (Option 1):**
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["claude-code-mcp"],
-         "args": [],
-         "env": {
-           "MCP_CLAUDE_DEBUG": "false"
-         }
-       }
-     }
-   }
-   ```
-   (Note: Ensure `claude-code-mcp.cmd` generated by npm global install is in your system PATH.)
-
-   **If running from cloned repository (Option 2 using `start.sh` or a potential `start.bat`):**
-   The `start.sh` script is designed for Unix-like shells (bash/zsh). For Windows, if using this method, you would typically need a `start.bat` equivalent or run the Node.js script directly. Using the global install is generally easier on Windows.
-   If you create a `start.bat`:
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["C:\\path\\to\\claude-mcp-server\\start.bat"],
-         "args": []
-       }
-     }
-   }
-   ```
-
-### Linux
-
-1. Locate the MCP configuration file:
-   ```
-   ~/.config/cursor/mcp.json
-   ```
-   Or for Windsurf installations of Cursor:
-   ```
-   ~/.config/.codeium/windsurf/mcp_config.json
-   ```
-   Create this file if it doesn't exist.
-
-2. Add the server configuration.
-
-   **If installed globally (Option 1):**
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["claude-code-mcp"],
-         "args": [],
-         "env": {
-           "MCP_CLAUDE_DEBUG": "false"
-         }
-       }
-     }
-   }
-   ```
-
-   **If running from cloned repository (Option 2 using `start.sh`):**
-   ```json
-   {
-     "mcpServers": {
-       "claude_code": {
-         "type": "stdio",
-         "command": ["/absolute/path/to/claude-mcp-server/start.sh"],
-         "args": []
-       }
-     }
-   }
-   ```
-
-3. After updating the configuration, **restart your IDE** to load the MCP server.
-
-## Environment Variables
-
-When using `start.sh` (Option 2 for installation), you can customize server behavior with environment variables in `start.sh`:
-
-- `CLAUDE_CLI_PATH`: **Optional.** Set a custom absolute path to the Claude CLI executable.
-- `MCP_CLAUDE_DEBUG`: Set to `true` to enable verbose debug logging. Default is `false` in `start.sh`.
-
-When using the globally installed `claude-code-mcp` (Option 1), these can be set in your shell environment before launching Cursor, or, more conveniently, within the `env` block of the `mcp.json` server definition (see examples above).
-
-**Claude CLI Discovery Order:**
-1.  The path specified by the `CLAUDE_CLI_PATH` environment variable (if set and valid).
-2.  The default installation path for Unix-like systems: `~/.claude/local/claude` (where `~` is the user's home directory). For Windows users, this automatic check may not apply; relying on `CLAUDE_CLI_PATH` or ensuring `claude` is in the system PATH is recommended.
-3.  Defaults to simply `claude`, relying on the system's PATH for resolution (a warning will be logged if this fallback is used).
-
-## Connecting to VSCode Claude
-
-To use this MCP server with Claude in VSCode:
-
-1. Install the Claude extension in VSCode
-
-2. Create or edit the MCP settings file:
-   ```
-   ~/.vscode/extensions/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
-   ```
-
-3. Add the server configuration:
-
+**Example for Global Install (`claude-code-mcp`):**
 ```json
 {
   "mcpServers": {
     "claude_code": {
-      "command": "/absolute/path/to/claude-mcp-server/start.sh",
+      "type": "stdio",
+      "command": ["claude-code-mcp"],
       "args": [],
-      "disabled": false
+      "env": {
+        "MCP_CLAUDE_DEBUG": "false"
+      }
     }
   }
 }
 ```
 
-## Usage
-
-Once installed and connected to an MCP client, you can invoke the tools using the following formats:
-
-### Claude Code Tool (renamed to `code`)
-
+**Example for `npx` usage:**
 ```json
 {
-  "tool_name": "code",
-  "params": {
-    "prompt": "Your prompt to Claude Code here"
+  "mcpServers": {
+    "claude_code": {
+      "type": "stdio",
+      "command": ["npx", "claude-mcp-server"],
+      "args": [],
+      "env": {
+        "MCP_CLAUDE_DEBUG": "false"
+      }
+    }
+  }
+}
+```
+Choose the `command` array that matches how you intend to run the server. Ensure only one `claude_code` entry exists if you're modifying an existing file.
+
+## Tools Provided
+
+This server exposes one primary tool:
+
+### `code`
+
+Executes a prompt directly using the Claude Code CLI with `--dangerously-skip-permissions`.
+
+**Arguments:**
+- `prompt` (string, required): The prompt to send to Claude Code.
+- `options` (object, optional):
+  - `tools` (array of strings, optional): Specific Claude tools to enable (e.g., `Bash`, `Read`, `Write`). Common tools are enabled by default.
+
+**Example MCP Request:**
+```json
+{
+  "toolName": "claude_code:code",
+  "arguments": {
+    "prompt": "Refactor the function foo in main.py to be async."
   }
 }
 ```
 
-#### Prompting Best Practices
-The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
+## Configuration via Environment Variables
 
-#### Advanced Usage Tip: Handling Large Text Inputs
-For prompts that require embedding very large blocks of text (e.g., entire files to be processed, extensive code snippets to be analyzed), directly including them in the JSON payload for the `code` tool can sometimes lead to formatting or escaping issues within the prompt string itself. A robust workaround is to:
-1.  Have Claude (or another process) write the large text block to a temporary file within its accessible working directory.
-2.  Instruct Claude in your `code` tool prompt to read the content from this temporary file.
-3.  Proceed with the rest of your prompt, referencing the content read from the file for subsequent operations.
-4.  Optionally, instruct Claude to delete the temporary file after use to clean up.
+The server's behavior can be customized using these environment variables:
 
-Example prompt snippet demonstrating this:
-```
-"Your work folder is /path/to/project
+- `CLAUDE_CLI_PATH`: Absolute path to the Claude CLI executable.
+  - Default: Checks `~/.claude/local/claude`, then falls back to `claude` (expecting it in PATH).
+- `MCP_CLAUDE_DEBUG`: Set to `true` for verbose debug logging from this MCP server. Default: `false`.
+- `CLAUDE_CLI_TOOLS_DEFAULT`: A comma-separated string of Claude tools to enable by default if not specified in the request (e.g., "Bash,Read,Write").
+  - Default: `Bash,Read,Write,DiffPreview,DiffApply,FileTree,FileSearch,CodeSearch`
+- `CLAUDE_CLI_TOOLS_DANGEROUS`: A comma-separated string of Claude tools to always enable, regardless of request options.
+  - Default: `DiffApply` (as it's crucial for applying changes).
 
-1. Read the full content of './large_input_data.txt' into a variable named DATA.
-2. Analyze DATA to find all email addresses.
-3. Create a new file 'emails.txt' and write the found email addresses to it.
-4. Delete './large_input_data.txt'."
-```
-
-This multi-step approach ensures the integrity and accurate transmission of large text inputs.
-
-`options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.
-
-#### Example: Complex Multi-step Task
-
-The `code` tool can handle surprisingly complex, multi-step instructions. For instance, the following prompt was used successfully to identify screenshots on the desktop, copy them to the project, update this README with the new images and captions, and then stage, commit, and push all related changes (including a `package.json` update) to GitHub, all in one go:
-
-```text
-Your work folder is /Users/steipete/Projects/claude-mcp/mcp-server/
-
-Here's a multi-step task:
-1.  Identify two screenshot image files on the user's desktop located at /Users/steipete/Desktop/. One is an existing screenshot, likely named something like 'cursor-screenshot.png' or related to Cursor IDE. The other is a newer screenshot depicting an AI tool (like Cascade) using another tool for git operations.
-2.  Copy these two identified screenshot files into the current project directory (/Users/steipete/Projects/claude-mcp/mcp-server/). Ensure the one related to Cursor is named `cursor-screenshot.png`. Name the new screenshot (showing the AI tool and git operations) as `claude_tool_git_example.png`.
-3.  Modify the `README.md` file in the project directory. In the '## Example Screenshots' section:
-    a.  Ensure there's an entry for `cursor-screenshot.png` (e.g., `<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">`).
-    b.  Add a new entry for `claude_tool_git_example.png`. It should be an image tag like `<img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">` followed by the caption on a new line: "Tools seem to prefer it even for git operations as it runs faster and in one shot."
-4.  Stage the following files for a git commit: `README.md`, `cursor-screenshot.png`, `claude_tool_git_example.png`, and `package.json`.
-5.  Commit the staged changes with the message: "docs: add example screenshots and update dependencies".
-6.  Push the commit to the default remote repository (origin) and the current branch (likely main).
-```
-
-7.  **Repairing Files with Syntax Errors:**
-    - 
-      ```
-      "Your work folder is /path/to/project
-
-      The file 'src/utils/parser.js' has syntax errors after a recent complex edit that broke its structure. Please analyze it, identify the syntax errors, and correct the file to make it valid JavaScript again, ensuring the original logic is preserved as much as possible."
-      ```
-
-8.  **Interacting with GitHub (e.g., Creating a Pull Request):**
-    - 
-      ```
-      "Your work folder is /Users/steipete/my_project
-
-      Create a GitHub Pull Request in the repository 'owner/repo' from the 'feature-branch' to the 'main' branch. Title: 'feat: Implement new login flow'. Body: 'This PR adds a new and improved login experience for users.'"
-      ```
-
-9.  **Interacting with GitHub (e.g., Checking PR CI Status):**
-    - 
-      ```
-      "Your work folder is /Users/steipete/my_project
-
-      Check the status of CI checks for Pull Request #42 in the GitHub repository 'owner/repo'. Report if they have passed, failed, or are still running."
-      ```
-
-**Prompting Best Practices:** The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
-
-## Tool Descriptions
-
-The server provides one tool:
-
-1. **Tool name**: `code`
-   - **Description**: "Executes a complex **prompt** directly using the Claude Code CLI, bypassing its internal permission checks (`--dangerously-skip-permissions`). This leverages Claude's ability to understand the prompt, reason about the task, and utilize its **internal tools** (like web search, file reading/writing, and bash execution) to achieve the goal. Ideal for complex code generation, analysis, refactoring, running build/test/lint commands (e.g., `npm test`, `pytest`), managing version control (e.g., `git status`, `git commit`), executing multi-step workflows (e.g., '''search for library updates and apply them'''), or performing other tasks requiring integrated reasoning and execution based on a single natural language instruction. Essentially, if you can describe a sequence of operations clearly, this tool can attempt to execute it. **Do not hesitate to use this tool for ambitious, multi-step tasks, even if they seem complex.** Best results are achieved with well-structured, detailed prompts. The server **does NOT automatically inject 'Your work folder is...'** context. If the `prompt` requires specific CWD context (for file operations, relative paths, git commands, etc.), the **`prompt` itself MUST explicitly start with 'Your work folder is /path/to/your/project_root'.** Claude executes within the server's CWD, so relative paths in prompts without explicit CWD context will resolve against the server's CWD. Using absolute paths in prompts is often safest if not providing explicit CWD context. Refer to the 'Example: Complex Multi-step Task' below for a concrete demonstration of its capabilities."
-   - **Parameters**:
-     - `prompt` (required): The prompt to send to Claude Code
-   - **Implementation**: Uses `claude --dangerously-skip-permissions` (invoked via `child_process.spawn`) to bypass all permission checks. The server locates the Claude CLI by first checking the `CLAUDE_CLI_PATH` environment variable, then looking in `~/.claude/local/claude`, and finally falling back to `claude` in the system PATH.
-
-## Example Screenshots
-
-<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">
-
-<img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">
-Tools seem to prefer it even for git operations as it runs faster and in one shot.
-
-<img src="additional_claude_screenshot.png" width="600" alt="Additional example screenshot provided by the user">
-This screenshot showcases another aspect of the project.
+These can be set in your shell environment or within the `env` block of your `mcp.json` server configuration.
 
 ## Troubleshooting
 
-- **Tool not showing up**: Check the Claude logs for errors when starting the MCP server. Ensure `start.sh` or `start.bat` is executable and `tsx` is installed and runnable (usually via `npx`).
-- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set), at the default Unix-like location (`~/.claude/local/claude`), or in the system PATH (if it fell back to just `'claude'`).
-    - Ensure the Claude CLI is installed correctly. For Unix-like systems, this is often at `~/.claude/local/claude` (verify by running `/doctor` in a Claude context). For Windows, ensure it's in your system PATH or set `CLAUDE_CLI_PATH`.
-    - Explicitly set the `CLAUDE_CLI_PATH` environment variable in `start.sh` or `start.bat` to the correct absolute path of your `claude` executable.
-- **Permission errors**: Ensure the `start.sh` script is executable and that Node.js has permission to execute `tsx` and the Claude CLI (whether found via `CLAUDE_CLI_PATH`, the default path, or the system PATH).
+- **"Command not found" (claude-code-mcp):** If installed globally, ensure the npm global bin directory is in your system's PATH. If using `npx`, ensure `npx` itself is working.
+- **"Command not found" (claude or ~/.claude/local/claude):** Ensure the Claude CLI is installed correctly. Run `claude/doctor` or check its documentation.
+- **Permissions Issues:** Make sure you've run the "Important First-Time Setup" step.
+- **JSON Errors from Server:** If `MCP_CLAUDE_DEBUG` is `true`, error messages or logs might interfere with MCP's JSON parsing. Set to `false` for normal operation.
+- **ESM/Import Errors:** Ensure you are using Node.js v20 or later.
+
+## Contributing
+
+Contributions are welcome! Please refer to the [Local Installation & Development Setup Guide](./docs/local_install.md) for details on setting up your environment.
+
+Submit issues and pull requests to the [GitHub repository](https://github.com/steipete/claude-code-mcp).
 
 ## License
 
 MIT
-
-Server test complete.
-
-<a href="https://glama.ai/mcp/servers/@steipete/claude-code-mcp">
-<img width="380" height="200" src="https://glama.ai/mcp/servers/@steipete/claude-code-mcp/badge" alt="Claude Code Server MCP server" />
-</a>
