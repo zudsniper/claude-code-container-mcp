@@ -6,7 +6,7 @@
   "license": "MIT",
   "main": "dist/server.js",
   "bin": {
-    "claude-code-mcp": "./dist/server.js"
+    "claude-code-mcp": "dist/server.js"
   },
   "scripts": {
     "build": "tsc",
