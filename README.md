@@ -6,6 +6,10 @@ An MCP (Model Context Protocol) server that allows running Claude Code in one-sh
 
 ## Overview
 
+![Cursor Screenshot](cursor-screenshot.png)
+
+Did you notice that Cursor often struggles to apply smaller edits via edit_file, especially when linting? And then it tries multiple times till it eventually works? Yeah... no more. It LOVES magic_file.
+
 This MCP server provides two tools that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
 
 - Run Claude Code with all permissions bypassed (using `--dangerously-skip-permissions`)
