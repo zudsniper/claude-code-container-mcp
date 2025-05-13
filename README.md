@@ -4,7 +4,7 @@ An MCP (Model Context Protocol) server that allows running Claude Code in one-sh
 
 Did you notice that Cursor often struggles to apply smaller edits via edit_file, especially when linting? And then it tries multiple times till it eventually works? Yeah... no more. It LOVES magic_file.
 
-<img src="screenshot.png" width="600" alt="Screenshot">
+<img src="docs/screenshot.png" width="600" alt="Screenshot">
 
 ## Overview
 
