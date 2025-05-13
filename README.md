@@ -2,13 +2,13 @@
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
 
-![Screenshot](screenshot.png)
+Did you notice that Cursor often struggles to apply smaller edits via edit_file, especially when linting? And then it tries multiple times till it eventually works? Yeah... no more. It LOVES magic_file.
+
+<img src="screenshot.png" width="600" alt="Screenshot">
 
 ## Overview
 
-![Cursor Screenshot](cursor-screenshot.png)
-
-Did you notice that Cursor often struggles to apply smaller edits via edit_file, especially when linting? And then it tries multiple times till it eventually works? Yeah... no more. It LOVES magic_file.
+<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">
 
 This MCP server provides two tools that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
 
