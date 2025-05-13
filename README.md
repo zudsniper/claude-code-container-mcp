@@ -2,10 +2,6 @@
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
 
-<a href="https://glama.ai/mcp/servers/@steipete/claude-code-mcp">
-<img width="380" height="200" src="https://glama.ai/mcp/servers/@steipete/claude-code-mcp/badge" alt="Claude Code Server MCP server" />
-</a>
-
 Did you notice that Cursor often struggles to apply smaller edits via edit_file, especially when linting? And then it tries multiple times till it eventually works? Yeah... no more. It LOVES magic_file.
 
 <img src="screenshot.png" width="600" alt="Screenshot">
@@ -222,3 +218,7 @@ The server provides two tools:
 MIT
 
 Server test complete.
+
+<a href="https://glama.ai/mcp/servers/@steipete/claude-code-mcp">
+<img width="380" height="200" src="https://glama.ai/mcp/servers/@steipete/claude-code-mcp/badge" alt="Claude Code Server MCP server" />
+</a>
