@@ -8,8 +8,6 @@ Did you notice that Cursor often struggles to apply smaller edits via edit_file,
 
 ## Overview
 
-<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">
-
 This MCP server provides two tools that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
 
 - Run Claude Code with all permissions bypassed (using `--dangerously-skip-permissions`)
@@ -175,7 +173,7 @@ Once installed and connected to an MCP client, you can invoke the tools using th
 
 If no tools are specified, the server enables common tools by default.
 
-### Claude File Edit Tool (renamed to `magic_file`)
+### Magic File Edit Tool (`magic_file`)
 
 ```json
 {
@@ -203,12 +201,16 @@ The server provides two tools:
    - **Parameters**:
      - `file_path` (required): The absolute path to the file to edit
      - `instruction` (required): Free text description of the edits to make to the file
-   - **Implementation**: Uses `claude --dangerously-skip-permissions` (invoked via `child_process.spawn`) with Edit tools enabled. The server locates the Claude CLI by first checking the `CLAUDE_CLI_PATH` environment variable, then looking in `~/.claude/local/claude`, and finally falling back to `claude` in the system PATH.
+   - **Implementation**: Uses `claude --dangerously-skip-permissions -p "Edit file \"${absoluteFilePath}\": ${args.instruction}"` to perform file edits. Path resolution and CLI discovery are the same as the `code` tool.
+
+## Example Screenshots
+
+<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">
 
 ## Troubleshooting
 
 - **Tool not showing up**: Check the Claude logs for errors when starting the MCP server. Ensure `start.sh` or `start.bat` is executable and `tsx` is installed and runnable (usually via `npx`).
-- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set), at the default Unix-like location (`~/.claude/local/claude`), or in the system PATH (if it fell back to just `'claude'`). 
+- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set), at the default Unix-like location (`~/.claude/local/claude`), or in the system PATH (if it fell back to just `'claude'`).
     - Ensure the Claude CLI is installed correctly. For Unix-like systems, this is often at `~/.claude/local/claude` (verify by running `/doctor` in a Claude context). For Windows, ensure it's in your system PATH or set `CLAUDE_CLI_PATH`.
     - Explicitly set the `CLAUDE_CLI_PATH` environment variable in `start.sh` or `start.bat` to the correct absolute path of your `claude` executable.
 - **Permission errors**: Ensure the `start.sh` script is executable and that Node.js has permission to execute `tsx` and the Claude CLI (whether found via `CLAUDE_CLI_PATH`, the default path, or the system PATH).
