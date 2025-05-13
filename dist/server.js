@@ -47,7 +47,7 @@ class ClaudeCodeServer {
         this.claudeCliPath = findClaudeCli();
         console.error(`[Setup] Using Claude CLI at: ${this.claudeCliPath}`);
         this.server = new Server({
-            name: 'mcp__claudecode',
+            name: 'claude_code',
             version: '1.0.0',
         }, {
             capabilities: {
@@ -69,8 +69,8 @@ class ClaudeCodeServer {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
             tools: [
                 {
-                    name: 'claudecode',
-                    description: 'Call when you want to edit a file in free text or answer any question or modify code. Claude can do basically anything as it is an AI.',
+                    name: 'claude_code',
+                    description: 'Claude Code is an AI that has system tools to edit files, search the web and access mcp tools can do basically anything as it is an AI. It can modify files, fix bugs, and refactor code across your entire project.',
                     inputSchema: {
                         type: 'object',
                         properties: {
@@ -94,49 +94,99 @@ class ClaudeCodeServer {
                         },
                         required: ['prompt'],
                     },
+                },
+                {
+                    name: 'claude_file_edit',
+                    description: 'Edit any file with a free text description. Is your edit_file tool not working again? Tell me what file and the contents and I\'ll figure it out!',
+                    inputSchema: {
+                        type: 'object',
+                        properties: {
+                            file_path: {
+                                type: 'string',
+                                description: 'The absolute path to the file to edit',
+                            },
+                            instruction: {
+                                type: 'string',
+                                description: 'Free text description of the edits to make to the file',
+                            }
+                        },
+                        required: ['file_path', 'instruction'],
+                    },
                 }
             ],
         }));
         // Handle tool calls
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
             try {
-                if (request.params.name !== 'claudecode') {
+                // Handle claude_code tool
+                if (request.params.name === 'claude_code') {
+                    const args = request.params.arguments;
+                    if (!args.prompt) {
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
+                    }
+                    // Build the command to run Claude Code
+                    // Use --dangerously-skip-permissions to bypass all permission prompts
+                    let command = `${this.claudeCliPath} --dangerously-skip-permissions -p "${args.prompt}"`;
+                    // Add tools option if specified - by default, enable all tools
+                    if (args.options?.tools && args.options.tools.length > 0) {
+                        const toolsList = args.options.tools.join(' ');
+                        command += ` --allowedTools ${toolsList}`;
+                    }
+                    else {
+                        // If no specific tools are requested, enable all common tools
+                        command += ` --allowedTools "Bash Read Write Edit MultiEdit Glob Grep LS Task Batch"`;
+                    }
+                    console.error(`[Execute] Running command: ${command}`);
+                    const { stdout, stderr } = await execAsync(command);
+                    if (stderr) {
+                        console.error(`[Warning] Command stderr: ${stderr}`);
+                    }
+                    return {
+                        content: [
+                            {
+                                type: 'text',
+                                text: stdout,
+                            },
+                        ],
+                    };
+                }
+                // Handle claude_file_edit tool
+                else if (request.params.name === 'claude_file_edit') {
+                    const args = request.params.arguments;
+                    if (!args.file_path) {
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: file_path');
+                    }
+                    if (!args.instruction) {
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: instruction');
+                    }
+                    // Build the command to run Claude Code with file edit instruction
+                    const prompt = `Please edit the file at path "${args.file_path}" according to these instructions: ${args.instruction}`;
+                    let command = `${this.claudeCliPath} --dangerously-skip-permissions -p "${prompt}"`;
+                    // Always enable Edit tools for file editing
+                    command += ` --allowedTools "Read Write Edit MultiEdit Glob Grep LS Bash"`;
+                    console.error(`[Execute] File Edit command: ${command}`);
+                    const { stdout, stderr } = await execAsync(command);
+                    if (stderr) {
+                        console.error(`[Warning] Command stderr: ${stderr}`);
+                    }
+                    return {
+                        content: [
+                            {
+                                type: 'text',
+                                text: stdout,
+                            },
+                        ],
+                    };
+                }
+                // Unknown tool
+                else {
                     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
                 }
-                const args = request.params.arguments;
-                if (!args.prompt) {
-                    throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
-                }
-                // Build the command to run Claude Code
-                // Use --yes to bypass all permission prompts
-                let command = `${this.claudeCliPath} --dangerously-skip-permissions -p "${args.prompt}"`;
-                // Add tools option if specified - by default, enable all tools
-                if (args.options?.tools && args.options.tools.length > 0) {
-                    const toolsList = args.options.tools.join(',');
-                    command += ` --allow=${toolsList}`;
-                }
-                else {
-                    // If no specific tools are requested, enable all common tools
-                    command += ` --allow=Bash,Read,Write,Edit,MultiEdit,Glob,Grep,LS,Task,Batch`;
-                }
-                console.error(`[Execute] Running command: ${command}`);
-                const { stdout, stderr } = await execAsync(command);
-                if (stderr) {
-                    console.error(`[Warning] Command stderr: ${stderr}`);
-                }
-                return {
-                    content: [
-                        {
-                            type: 'text',
-                            text: stdout,
-                        },
-                    ],
-                };
             }
             catch (error) {
-                console.error('[Error] Failed to execute Claude Code:', error);
+                console.error('[Error] Failed to execute tool:', error);
                 if (error instanceof Error) {
-                    throw new McpError(ErrorCode.InternalError, `Failed to execute Claude Code: ${error.message}`);
+                    throw new McpError(ErrorCode.InternalError, `Failed to execute tool: ${error.message}`);
                 }
                 throw error;
             }

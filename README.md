@@ -4,10 +4,11 @@ An MCP (Model Context Protocol) server that allows running Claude Code in one-sh
 
 ## Overview
 
-This MCP server provides a tool called `claudecode` that can be used by LLMs to call Claude Code directly. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
+This MCP server provides two tools that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
 
-- Run Claude Code with all permissions pre-approved
-- Execute Claude Code with any prompt
+- Run Claude Code with all permissions bypassed (using `--dangerously-skip-permissions`)
+- Execute Claude Code with any prompt without permission interruptions
+- Access file editing capabilities directly
 - Enable specific tools by default
 
 ## Prerequisites
@@ -43,15 +44,13 @@ npm run build
 chmod +x start.sh
 ```
 
-## Connecting to Claude Desktop
-
-To connect the MCP server with Claude Desktop:
+## Connecting to Cursor/Windsurf/Visual Studio Code
 
 ### macOS
 
-1. Locate the Claude Desktop configuration file:
+1. Locate the MCP configuration file:
    ```
-   ~/Library/Application Support/Claude/claude_desktop_config.json
+   ~/.cursor/mcp.json
    ```
    Create this file if it doesn't exist.
 
@@ -60,7 +59,7 @@ To connect the MCP server with Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "claudecode": {
+    "claude_code": {
       "type": "stdio",
       "command": "/absolute/path/to/claude-mcp-server/start.sh",
       "args": []
@@ -73,9 +72,9 @@ Make sure to replace `/absolute/path/to/claude-mcp-server` with the actual path 
 
 ### Windows
 
-1. Locate the Claude Desktop configuration file:
+1. Locate the MCP configuration file:
    ```
-   %APPDATA%\Claude\claude_desktop_config.json
+   %APPDATA%\cursor\mcp.json
    ```
    Create this file if it doesn't exist.
 
@@ -84,22 +83,22 @@ Make sure to replace `/absolute/path/to/claude-mcp-server` with the actual path 
 ```json
 {
   "mcpServers": {
-    "claudecode": {
+    "claude_code": {
       "type": "stdio",
-      "command": "C:\\path\\to\\claude-mcp-server\\start.sh",
+      "command": "C:\\path\\to\\claude-mcp-server\\start.bat",
       "args": []
     }
   }
 }
 ```
 
-For Windows, you might need to use a batch file (start.bat) instead of the shell script.
+For Windows, you should use the batch file (start.bat) instead of the shell script.
 
 ### Linux
 
-1. Locate the Claude Desktop configuration file:
+1. Locate the MCP configuration file:
    ```
-   ~/.config/Claude/claude_desktop_config.json
+   ~/.config/cursor/mcp.json
    ```
    Create this file if it doesn't exist.
 
@@ -108,7 +107,7 @@ For Windows, you might need to use a batch file (start.bat) instead of the shell
 ```json
 {
   "mcpServers": {
-    "claudecode": {
+    "claude_code": {
       "type": "stdio",
       "command": "/absolute/path/to/claude-mcp-server/start.sh",
       "args": []
@@ -117,7 +116,7 @@ For Windows, you might need to use a batch file (start.bat) instead of the shell
 }
 ```
 
-3. After updating the configuration, restart Claude Desktop to load the MCP server.
+3. After updating the configuration, restart your IDE to load the MCP server.
 
 ## Environment Variables
 
@@ -149,11 +148,10 @@ To use this MCP server with Claude in VSCode:
 ```json
 {
   "mcpServers": {
-    "claudecode": {
+    "claude_code": {
       "command": "/absolute/path/to/claude-mcp-server/start.sh",
       "args": [],
-      "disabled": false,
-      "autoApprove": []
+      "disabled": false
     }
   }
 }
@@ -161,7 +159,9 @@ To use this MCP server with Claude in VSCode:
 
 ## Usage
 
-Once installed and connected to an MCP client like Claude Desktop, you can invoke the tool using the following format:
+Once installed and connected to an MCP client, you can invoke the tools using the following formats:
+
+### Claude Code Tool
 
 ```json
 {
@@ -174,15 +174,32 @@ Once installed and connected to an MCP client like Claude Desktop, you can invok
 
 If no tools are specified, the server enables common tools by default.
 
-## Tool Description
+### Claude File Edit Tool
 
-The server provides a single tool:
+```json
+{
+  "file_path": "/path/to/your/file.js",
+  "instruction": "Add a new function that calculates the fibonacci sequence"
+}
+```
 
-- **Tool name**: `claudecode`
-- **Description**: "Call when you want to edit a file in free text or answer any question or modify code. Claude can do basically anything as it is an AI."
-- **Parameters**:
-  - `prompt` (required): The prompt to send to Claude Code
-  - `options.tools` (optional): Array of specific tools to enable
+## Tool Descriptions
+
+The server provides two tools:
+
+1. **Tool name**: `claude_code`
+   - **Description**: "Claude Code is an AI that has system tools to edit files, search the web and access mcp tools can do basically anything as it is an AI. It can modify files, fix bugs, and refactor code across your entire project."
+   - **Parameters**:
+     - `prompt` (required): The prompt to send to Claude Code
+     - `options.tools` (optional): Array of specific tools to enable
+   - **Implementation**: Uses `claude --dangerously-skip-permissions` to bypass all permission checks
+
+2. **Tool name**: `claude_file_edit`
+   - **Description**: "Edit any file with a free text description. Is your edit_file tool not working again? Tell me what file and the contents and I'll figure it out!"
+   - **Parameters**:
+     - `file_path` (required): The absolute path to the file to edit
+     - `instruction` (required): Free text description of the edits to make to the file
+   - **Implementation**: Uses `claude --dangerously-skip-permissions` with Edit tools enabled
 
 ## Troubleshooting
 
