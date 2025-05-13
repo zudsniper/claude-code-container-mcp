@@ -88,10 +88,7 @@ Create this file if it doesn't exist. Add or update the configuration for `claud
   "mcpServers": {
     "claude_code": {
       "type": "stdio",
-      "command": ["claude-code-mcp"],
-      "env": {
-        "MCP_CLAUDE_DEBUG": "false"
-      }
+      "command": ["claude-code-mcp"]
     }
   }
 }
@@ -103,15 +100,11 @@ Create this file if it doesn't exist. Add or update the configuration for `claud
   "mcpServers": {
     "claude_code": {
       "type": "stdio",
-      "command": ["npx", "@steipete/claude-code-mcp"],
-      "env": {
-        "MCP_CLAUDE_DEBUG": "false"
-      }
+      "command": ["npx", "@steipete/claude-code-mcp"]
     }
   }
 }
 ```
-Choose the `command` array that matches how you intend to run the server. Ensure only one `claude_code` entry exists if you're modifying an existing file.
 
 ## Tools Provided
 
