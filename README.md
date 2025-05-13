@@ -78,7 +78,6 @@ Create this file if it doesn't exist. Add or update the configuration for `claud
     "claude_code": {
       "type": "stdio",
       "command": ["claude-code-mcp"],
-      "args": [],
       "env": {
         "MCP_CLAUDE_DEBUG": "false"
       }
@@ -94,7 +93,6 @@ Create this file if it doesn't exist. Add or update the configuration for `claud
     "claude_code": {
       "type": "stdio",
       "command": ["npx", "@steipete/claude-code-mcp"],
-      "args": [],
       "env": {
         "MCP_CLAUDE_DEBUG": "false"
       }
