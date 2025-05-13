@@ -208,7 +208,14 @@ Here's a multi-step task:
 The server provides two tools:
 
 1. **Tool name**: `code`
-   - **Description**: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for a wide range of tasks including: complex code generation, analysis, and refactoring; performing web searches and summarizing content; running arbitrary terminal commands (e.g., `open .` to open Finder, `open -a Calculator` to open apps, or `open https://example.com` to open a URL in a web browser). For example, you could open a GitHub PR page once all tests are green. Handles general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted."
+   - **Description**: "**Highly Versatile & Powerful:** Executes a given prompt directly with the Claude Code CLI, bypassing ALL permission checks (`--dangerously-skip-permissions`). This tool is **not limited to simple commands; it can orchestrate complex, multi-step workflows** based on a single, detailed natural language prompt. This includes, but is not limited to:
+    - Advanced code generation, analysis, and refactoring.
+    - Performing web searches and summarizing content.
+    - Executing arbitrary terminal commands (e.g., opening applications, URLs, or files).
+    - **Sophisticated file system operations:** such as identifying, copying, and moving files (even from outside the immediate project workspace, like the user's Desktop, if precise paths are provided or can be reasonably inferred from the prompt).
+    - **Comprehensive Git workflows:** including staging specific files, committing with detailed messages, and pushing to remote repositories.
+    - **Automated file modifications:** like updating READMEs, configuration files, or source code based on instructions.
+Essentially, if you can describe a sequence of operations clearly, this tool can attempt to execute it. **Do not hesitate to use this tool for ambitious, multi-step tasks, even if they seem complex.** Best results are achieved with well-structured, detailed prompts. **Always provide clear context in your prompt**, especially the current working directory (e.g., 'Your work folder is /path/to/project'). Refer to the 'Example: Complex Multi-step Task' below for a concrete demonstration of its capabilities. `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted."
    - **Parameters**:
      - `prompt` (required): The prompt to send to Claude Code
      - `options.tools` (optional): Array of specific tools to enable
