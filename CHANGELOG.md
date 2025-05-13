@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0] - 2025-05-13
+
+### Changed
+- Unified CWD (Current Working Directory) handling for `code` and `magic_file` tools.
+  - The server no longer automatically injects 'Your work folder is...' context into prompts for these tools.
+  - Users MUST now explicitly provide CWD context (e.g., by starting their `prompt` for the `code` tool, or `instruction` for the `magic_file` tool, with 'Your work folder is /path/to/project_root') if operations require it, especially for relative paths or context-sensitive tasks.
+  - Updated tool descriptions in `README.md` and `src/server.ts` to reflect this new responsibility for the client/user.
+
 ## [1.2.0] - 2025-05-13
 
 ### Added
