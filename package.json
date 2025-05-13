@@ -5,11 +5,22 @@
   "author": "Peter Steinberger",
   "license": "MIT",
   "main": "dist/server.js",
+  "bin": {
+    "claude-code-mcp": "./dist/server.js"
+  },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs/local_install.md",
+    "start.sh"
+  ],
   "dependencies": {
     "@eslint/js": "^9.26.0",
     "@modelcontextprotocol/sdk": "^1.11.2",
