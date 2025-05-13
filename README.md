@@ -173,6 +173,24 @@ Once installed and connected to an MCP client, you can invoke the tools using th
 
 If no tools are specified, the server enables common tools by default.
 
+#### Example: Complex Multi-step Task
+
+The `code` tool can handle surprisingly complex, multi-step instructions. For instance, the following prompt was used successfully to identify screenshots on the desktop, copy them to the project, update this README with the new images and captions, and then stage, commit, and push all related changes (including a `package.json` update) to GitHub, all in one go:
+
+```text
+Your work folder is /Users/steipete/Projects/claude-mcp/mcp-server/
+
+Here's a multi-step task:
+1.  Identify two screenshot image files on the user's desktop located at /Users/steipete/Desktop/. One is an existing screenshot, likely named something like 'cursor-screenshot.png' or related to Cursor IDE. The other is a newer screenshot depicting an AI tool (like Cascade) using another tool for git operations.
+2.  Copy these two identified screenshot files into the current project directory (/Users/steipete/Projects/claude-mcp/mcp-server/). Ensure the one related to Cursor is named `cursor-screenshot.png`. Name the new screenshot (showing the AI tool and git operations) as `claude_tool_git_example.png`.
+3.  Modify the `README.md` file in the project directory. In the '## Example Screenshots' section:
+    a.  Ensure there's an entry for `cursor-screenshot.png` (e.g., `<img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">`).
+    b.  Add a new entry for `claude_tool_git_example.png`. It should be an image tag like `<img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">` followed by the caption on a new line: "Tools seem to prefer it even for git operations as it runs faster and in one shot."
+4.  Stage the following files for a git commit: `README.md`, `cursor-screenshot.png`, `claude_tool_git_example.png`, and `package.json`.
+5.  Commit the staged changes with the message: "docs: add example screenshots and update dependencies".
+6.  Push the commit to the default remote repository (origin) and the current branch (likely main).
+```
+
 ### Magic File Edit Tool (`magic_file`)
 
 ```json
@@ -209,6 +227,9 @@ The server provides two tools:
 
 <img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">
 Tools seem to prefer it even for git operations as it runs faster and in one shot.
+
+<img src="additional_claude_screenshot.png" width="600" alt="Additional example screenshot provided by the user">
+This screenshot showcases another aspect of the project.
 
 ## Troubleshooting
 
