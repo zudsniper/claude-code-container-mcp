@@ -121,7 +121,7 @@ You can customize the server behavior with the following environment variables (
 
 **Claude CLI Discovery Order:**
 1.  The path specified by the `CLAUDE_CLI_PATH` environment variable (if set and valid).
-2.  The default installation path: `~/.claude/local/claude` (where `~` is the user's home directory).
+2.  The default installation path for Unix-like systems: `~/.claude/local/claude` (where `~` is the user's home directory). For Windows users, this automatic check may not apply; relying on `CLAUDE_CLI_PATH` or ensuring `claude` is in the system PATH is recommended.
 3.  Defaults to simply `claude`, relying on the system's PATH for resolution (a warning will be logged if this fallback is used).
 
 ## Connecting to VSCode Claude
@@ -186,7 +186,7 @@ If no tools are specified, the server enables common tools by default.
 The server provides two tools:
 
 1. **Tool name**: `code`
-   - **Description**: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for complex code generation, analysis, refactoring, or general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., Bash, Read, Write); common tools are enabled by default if this is omitted."
+   - **Description**: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for a wide range of tasks including: complex code generation, analysis, and refactoring; performing web searches and summarizing content; running arbitrary terminal commands (e.g., `open .` to open Finder, `open -a Calculator` to open apps, or `open https://example.com` to open a URL in a web browser). For example, you could open a GitHub PR page once all tests are green. Handles general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted."
    - **Parameters**:
      - `prompt` (required): The prompt to send to Claude Code
      - `options.tools` (optional): Array of specific tools to enable
@@ -202,9 +202,9 @@ The server provides two tools:
 ## Troubleshooting
 
 - **Tool not showing up**: Check the Claude logs for errors when starting the MCP server. Ensure `start.sh` or `start.bat` is executable and `tsx` is installed and runnable (usually via `npx`).
-- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set) or at the default location (`~/.claude/local/claude`). If the server falls back to using just `'claude'`, the `ENOENT` error will occur if it's also not found in the system PATH accessible to the Node.js process. 
-    - Ensure the Claude CLI is installed correctly, either at `~/.claude/local/claude` or in a location included in your system's PATH.
-    - Alternatively, explicitly set the `CLAUDE_CLI_PATH` environment variable in `start.sh` or `start.bat` to the correct absolute path of your `claude` executable.
+- **Command not found / "Error: spawn claude ENOENT" / "[Warning] Claude CLI not found... Falling back to \"claude\" in PATH..."**: This means the server could not find the `claude` executable via the `CLAUDE_CLI_PATH` environment variable (if set), at the default Unix-like location (`~/.claude/local/claude`), or in the system PATH (if it fell back to just `'claude'`). 
+    - Ensure the Claude CLI is installed correctly. For Unix-like systems, this is often at `~/.claude/local/claude` (verify by running `/doctor` in a Claude context). For Windows, ensure it's in your system PATH or set `CLAUDE_CLI_PATH`.
+    - Explicitly set the `CLAUDE_CLI_PATH` environment variable in `start.sh` or `start.bat` to the correct absolute path of your `claude` executable.
 - **Permission errors**: Ensure the `start.sh` script is executable and that Node.js has permission to execute `tsx` and the Claude CLI (whether found via `CLAUDE_CLI_PATH`, the default path, or the system PATH).
 
 ## License

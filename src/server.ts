@@ -153,7 +153,7 @@ class ClaudeCodeServer {
       tools: [
         {
           name: 'code',
-          description: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for complex code generation, analysis, refactoring, or general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., Bash, Read, Write); common tools are enabled by default if this is omitted.",
+          description: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for a wide range of tasks including: complex code generation, analysis, and refactoring; performing web searches and summarizing content; running arbitrary terminal commands (e.g., `open .` to open Finder, `open -a Calculator` to open apps, or `open https://example.com` to open a URL in a web browser). For example, you could open a GitHub PR page once all tests are green. Handles general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.",
           inputSchema: {
             type: 'object',
             properties: {
@@ -215,8 +215,29 @@ class ClaudeCodeServer {
           }
           const { stdout, stderr } = await spawnAsync(command, commandArgs);
           if (stderr && debugMode) console.error(`[Warning] Command stderr (full): ${stderr}`);
-          const diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nResult (JSON):\n`;
-          return { content: [{ type: 'text', text: diagnosticPrefix + stdout }] };
+          
+          // Attempt to parse the JSON output from Claude CLI
+          let resultText = 'Error: Failed to parse Claude CLI output.';
+          let diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nExtracted Result:\n`;
+          try {
+            const parsedJson = JSON.parse(stdout);
+            resultText = parsedJson.result || 'Error: No result field found in Claude CLI JSON output.';
+
+            // Log extra info in debug mode
+            if (debugMode) {
+              console.error(`[Debug] Claude Cost (USD): ${parsedJson.cost_usd ?? 'N/A'}`);
+              console.error(`[Debug] Claude Duration (ms): ${parsedJson.duration_ms ?? 'N/A'}`);
+              console.error(`[Debug] Claude Session ID: ${parsedJson.session_id ?? 'N/A'}`);
+            }
+
+          } catch (parseError) {
+            console.error(`[Error] Failed to parse JSON from Claude CLI stdout: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+            console.error(`[Error] Raw stdout was: ${stdout}`);
+            resultText = `Error: Invalid JSON received from Claude CLI. Raw output: ${stdout}`;
+            diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nError Parsing Result:\n`;
+          }
+          
+          return { content: [{ type: 'text', text: diagnosticPrefix + resultText }] };
         }
 
         // Handle magic_file tool
@@ -230,8 +251,29 @@ class ClaudeCodeServer {
           commandArgs.push('--allowedTools', "Read Write Edit MultiEdit Glob Grep LS Bash");
           const { stdout, stderr } = await spawnAsync(command, commandArgs, { timeout: 60000 });
           if (stderr && debugMode) console.error(`[Warning] Command stderr (full): ${stderr}`);
-          const diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nResult (JSON):\n`;
-          return { content: [{ type: 'text', text: diagnosticPrefix + stdout }] };
+
+          // Attempt to parse the JSON output from Claude CLI
+          let resultText = 'Error: Failed to parse Claude CLI output.';
+          let diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nExtracted Result:\n`;
+          try {
+            const parsedJson = JSON.parse(stdout);
+            resultText = parsedJson.result || 'Error: No result field found in Claude CLI JSON output.';
+
+            // Log extra info in debug mode
+            if (debugMode) {
+              console.error(`[Debug] Claude Cost (USD): ${parsedJson.cost_usd ?? 'N/A'}`);
+              console.error(`[Debug] Claude Duration (ms): ${parsedJson.duration_ms ?? 'N/A'}`);
+              console.error(`[Debug] Claude Session ID: ${parsedJson.session_id ?? 'N/A'}`);
+            }
+
+          } catch (parseError) {
+            console.error(`[Error] Failed to parse JSON from Claude CLI stdout: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+            console.error(`[Error] Raw stdout was: ${stdout}`);
+            resultText = `Error: Invalid JSON received from Claude CLI. Raw output: ${stdout}`;
+            diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nError Parsing Result:\n`;
+          }
+
+          return { content: [{ type: 'text', text: diagnosticPrefix + resultText }] };
         }
 
         // Unknown tool - Use MethodNotFound if ToolNotFound is incorrect
