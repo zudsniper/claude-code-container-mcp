@@ -42,6 +42,24 @@ npm install
 chmod +x start.sh
 ```
 
+## Important First-Time Setup: Accepting Permissions
+
+**Before the MCP server can successfully use the `code` or `magic_file` tools, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
+
+This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
+
+```bash
+claude -p "hello" --dangerously-skip-permissions
+```
+
+Or, if `claude` is not in your PATH but you're using the default install location:
+
+```bash
+~/.claude/local/claude -p "hello" --dangerously-skip-permissions
+```
+
+Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
+
 ## Connecting to Cursor/Windsurf/Visual Studio Code
 
 ### macOS
