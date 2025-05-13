@@ -73,12 +73,14 @@ Cursor typically uses `mcp.json`. Common locations:
 - **Windows:** `%APPDATA%\\Cursor\\mcp.json`
 - **Linux:** `~/.config/cursor/mcp.json`
 
-#### For Windsurf (and some VS Code setups)
+#### For VS Code (with Codeium Extension) & Windsurf
 
-Clients like Windsurf or certain VS Code integrations might use `mcp_config.json` (or sometimes `mcp.json` in a Codeium-related directory). Common locations:
-- **macOS:** `~/.codeium/windsurf/mcp_config.json` (or `~/.cursor/mcp.json` if Cursor is also used as a generic client)
-- **Windows:** `%APPDATA%\\Codeium\\windsurf\\mcp_config.json` (or `%APPDATA%\\Cursor\\mcp.json`)
-- **Linux:** `~/.config/.codeium/windsurf/mcp_config.json` (or `~/.config/cursor/mcp.json`)
+VS Code users, typically with the Codeium extension, and Windsurf users often use `mcp_config.json` located within a Codeium-specific directory. Common locations:
+- **macOS:** `~/.codeium/windsurf/mcp_config.json`
+- **Windows:** `%APPDATA%\\Codeium\\windsurf\\mcp_config.json`
+- **Linux:** `~/.config/.codeium/windsurf/mcp_config.json`
+
+(Note: In some mixed setups, if Cursor is also installed, these clients might fall back to using Cursor's `~/.cursor/mcp.json` path. Prioritize the Codeium-specific paths if using the Codeium extension.)
 
 Create this file if it doesn't exist. Add or update the configuration for `claude_code`:
 
