@@ -37,7 +37,7 @@ If this server is published to NPM (e.g., as `@your-npm-username/claude-mcp-serv
       "command": "npx",
       "args": [
         "-y",
-        "@steipete/claude-mcp-server@latest"
+        "@steipete/claude-code-mcp@latest"
       ]
       // Ensure any required API keys or environment variables are set up
       // as per the package's documentation if it needs them.
