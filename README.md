@@ -8,7 +8,7 @@ Did you notice that Cursor often struggles to apply smaller edits via edit_file,
 
 ## Overview
 
-This MCP server provides two tools that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
+This MCP server provides one tool that can be used by LLMs to interact with Claude Code. When integrated with Claude Desktop or other MCP clients, it allows LLMs to:
 
 - Run Claude Code with all permissions bypassed (using `--dangerously-skip-permissions`)
 - Execute Claude Code with any prompt without permission interruptions
@@ -44,7 +44,7 @@ chmod +x start.sh
 
 ## Important First-Time Setup: Accepting Permissions
 
-**Before the MCP server can successfully use the `code` or `magic_file` tools, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
+**Before the MCP server can successfully use the `code` tool, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
 
 This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
 
@@ -191,6 +191,30 @@ Once installed and connected to an MCP client, you can invoke the tools using th
 
 If no tools are specified, the server enables common tools by default.
 
+#### Prompting Best Practices
+The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
+
+#### Advanced Usage Tip: Handling Large Text Inputs
+For prompts that require embedding very large blocks of text (e.g., entire files to be processed, extensive code snippets to be analyzed), directly including them in the JSON payload for the `code` tool can sometimes lead to formatting or escaping issues within the prompt string itself. A robust workaround is to:
+1.  Have Claude (or another process) write the large text block to a temporary file within its accessible working directory.
+2.  Instruct Claude in your `code` tool prompt to read the content from this temporary file.
+3.  Proceed with the rest of your prompt, referencing the content read from the file for subsequent operations.
+4.  Optionally, instruct Claude to delete the temporary file after use to clean up.
+
+Example prompt snippet demonstrating this:
+```
+"Your work folder is /path/to/project
+
+1. Read the full content of './large_input_data.txt' into a variable named DATA.
+2. Analyze DATA to find all email addresses.
+3. Create a new file 'emails.txt' and write the found email addresses to it.
+4. Delete './large_input_data.txt'."
+```
+
+This multi-step approach ensures the integrity and accurate transmission of large text inputs.
+
+`options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.
+
 #### Example: Complex Multi-step Task
 
 The `code` tool can handle surprisingly complex, multi-step instructions. For instance, the following prompt was used successfully to identify screenshots on the desktop, copy them to the project, update this README with the new images and captions, and then stage, commit, and push all related changes (including a `package.json` update) to GitHub, all in one go:
@@ -209,21 +233,17 @@ Here's a multi-step task:
 6.  Push the commit to the default remote repository (origin) and the current branch (likely main).
 ```
 
-### Magic File Edit Tool (`magic_file`)
-
-```json
-{
-  "tool_name": "magic_file",
-  "params": {
-    "file_path": "/path/to/your/file.js",
-    "instruction": "Refactor the processData function to use async/await instead of promises."
-  }
-}
-```
+7.  **Repairing Files with Syntax Errors:**
+    - 
+      ```
+      "Your work folder is /path/to/project
+      
+      The file 'src/utils/parser.js' has syntax errors after a recent complex edit that broke its structure. Please analyze it, identify the syntax errors, and correct the file to make it valid JavaScript again, ensuring the original logic is preserved as much as possible."
+      ```
 
 ## Tool Descriptions
 
-The server provides two tools:
+The server provides one tool:
 
 1. **Tool name**: `code`
    - **Description**: "**Highly Versatile & Powerful:** Executes a given prompt directly with the Claude Code CLI, bypassing ALL permission checks (`--dangerously-skip-permissions`). This tool is **not limited to simple commands; it can orchestrate complex, multi-step workflows** based on a single, detailed natural language prompt. This includes, but is not limited to:
@@ -238,13 +258,6 @@ Essentially, if you can describe a sequence of operations clearly, this tool can
      - `prompt` (required): The prompt to send to Claude Code
      - `options.tools` (optional): Array of specific tools to enable
    - **Implementation**: Uses `claude --dangerously-skip-permissions` (invoked via `child_process.spawn`) to bypass all permission checks. The server locates the Claude CLI by first checking the `CLAUDE_CLI_PATH` environment variable, then looking in `~/.claude/local/claude`, and finally falling back to `claude` in the system PATH.
-
-2. **Tool name**: `magic_file`
-   - **Description**: "Edits a specified file based on natural language instructions, leveraging the Claude Code CLI with all editing permissions bypassed (`--dangerously-skip-permissions`). Best for complex or semantic file modifications where describing the desired change in plain language is more effective than precise line-by-line edits. Requires a `file_path` and a descriptive `instruction`. The server **does NOT automatically inject 'Your work folder is...'** context. The `file_path` argument can be relative (resolved by server against its CWD) or absolute. If the edit described in the `instruction` relies on a specific project structure or uses relative paths for other files, the **`instruction` itself MUST explicitly start with 'Your work folder is /path/to/your/project_root'.** An absolute `file_path` is recommended if no CWD context is provided in the `instruction`. Also a great alternative if a general-purpose `edit_file` tool is struggling with complex edits or specific file types. Example instruction: 'Refactor the processData function to use async/await instead of promises.'"
-   - **Parameters**:
-     - `file_path` (required): The absolute path to the file to edit
-     - `instruction` (required): Free text description of the edits to make to the file
-   - **Implementation**: Uses `claude --dangerously-skip-permissions -p "Edit file \"${absoluteFilePath}\": ${args.instruction}"` to perform file edits. Path resolution and CLI discovery are the same as the `code` tool.
 
 ## Example Screenshots
 

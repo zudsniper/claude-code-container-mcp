@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0] - 2025-05-13
+
+### Changed
+- **Unified Claude Tools into a Single Agentic `code` Tool:**
+  - Removed the `magic_file` tool. All its functionalities are now integrated into the `code` tool.
+  - The `code` tool is now the sole interface to Claude's capabilities, acting as a versatile agent.
+- **Massively Expanded `code` Tool Description:**
+  - The description for the `code` tool in both `src/server.ts` and `README.md` has been significantly enhanced to reflect its broad agentic capabilities. This includes:
+    - Code generation, analysis, and refactoring.
+    - File system operations (creating, reading, editing, moving, copying, deleting files).
+    - Version control operations (e.g., staging, committing, pushing changes).
+    - Running terminal commands.
+    - Web searching and summarization.
+    - Managing complex multi-step workflows.
+  - **CRITICAL:** Added explicit guidance and examples on the necessity for the user's prompt to provide Current Working Directory (CWD) context (e.g., "Your work folder is /path/to/project") when operations depend on it.
+  - Added an "Advanced Usage Tip" explaining how to use temporary files to pass large text inputs to Claude, avoiding JSON formatting issues.
+- Updated `README.md` to remove references to `magic_file` and reflect the new, comprehensive `code` tool description.
+
 ## [1.3.0] - 2025-05-13
 
 ### Changed

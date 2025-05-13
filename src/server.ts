@@ -52,7 +52,7 @@ function findClaudeCli(debugMode: boolean): string {
   } catch (err) {
     if (debugMode) console.error(`[Debug] Error checking default user path: ${err instanceof Error ? err.message : String(err)}`);
   }
-  
+
   // 3. Default to 'claude' command name
   if (debugMode) console.error('[Debug] CLAUDE_CLI_PATH not set or invalid, and not found at default user path. Defaulting to "claude" command name, relying on spawn/PATH lookup.');
   console.warn('[Warning] Claude CLI not found via CLAUDE_CLI_PATH or at ~/.claude/local/claude. Falling back to "claude" in PATH. Ensure it is installed and accessible.');
@@ -67,11 +67,6 @@ interface ClaudeCodeArgs {
   options?: {
     tools?: string[];
   };
-}
-
-interface ClaudeFileEditArgs {
-  file_path: string;
-  instruction: string;
 }
 
 // Ensure spawnAsync is defined correctly *before* the class
@@ -159,13 +154,52 @@ class ClaudeCodeServer {
       tools: [
         {
           name: 'code',
-          description: "**Highly Versatile & Powerful:** Executes a given prompt directly with the Claude Code CLI, bypassing ALL permission checks (`--dangerously-skip-permissions`). This tool is **not limited to simple commands; it can orchestrate complex, multi-step workflows** based on a single, detailed natural language prompt. This includes, but is not limited to:\n    - Advanced code generation, analysis, and refactoring.\n    - Performing web searches and summarizing content.\n    - Executing arbitrary terminal commands (e.g., opening applications, URLs, or files).\n    - **Sophisticated file system operations:** such as identifying, copying, and moving files (even from outside the immediate project workspace, like the user's Desktop, if precise paths are provided or can be reasonably inferred from the prompt).\n    - **Comprehensive Git workflows:** including staging specific files, committing with detailed messages, and pushing to remote repositories.\n    - **Automated file modifications:** like updating READMEs, configuration files, or source code based on instructions.\nEssentially, if you can describe a sequence of operations clearly, this tool can attempt to execute it. **Do not hesitate to use this tool for ambitious, multi-step tasks, even if they seem complex.** Best results are achieved with well-structured, detailed prompts. The server automatically includes its current working directory in the context provided to Claude. While you don't need to manually add 'Your work folder is...', ensuring your prompt is clear about file paths and project context remains beneficial, especially for complex tasks. `options.tools` can further specify which internal Claude tools are allowed (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.",
+          description: `**Claude Code Agent: Your Direct Line to Advanced AI Capabilities**
+
+Executes a given \`prompt\` directly with the Claude Code CLI, bypassing ALL permission checks (\`--dangerously-skip-permissions\`). This single, powerful tool allows you to leverage Claude's full range of agentic capabilities, including complex multi-step workflows, based on your natural language \`prompt\`.
+
+**CRITICAL: Current Working Directory (CWD) Context**
+The server **does NOT automatically inject 'Your work folder is...'** into your prompt. If your operations require specific CWD context (e.g., for file system interactions, relative paths, git commands), **your \`prompt\` argument ITSELF MUST EXPLICITLY START WITH 'Your work folder is /path/to/your/project_root'.** Claude executes within the server's own CWD; relative paths in prompts without this explicit CWD context will resolve against the server's CWD, which may not be your intent. Using absolute paths within your prompt is often the safest approach if not providing explicit CWD context.
+
+**Key Capabilities & Example Prompts:**
+
+1.  **Code Generation, Analysis & Refactoring:**
+    - \`"Generate a Python script to parse CSV data and output JSON."\`
+    - \`"Analyze my_script.py for potential bugs and suggest improvements."\`
+
+2.  **File System Operations (Create, Read, Edit, Manage):**
+    - **Creating Files:** \`"Your work folder is /Users/steipete/my_project\\n\\nCreate a new file named 'config.yml' in the 'app/settings' directory with the following content:\\nport: 8080\\ndatabase: main_db"\`
+    - **Reading Files:** \`"Your work folder is /Users/steipete/my_project\\n\\nRead the contents of 'src/api/endpoints.js' and list all defined GET routes."\`
+    - **Editing Files (replaces dedicated file editing tools):** \`"Your work folder is /Users/steipete/my_project\\n\\nEdit file 'public/css/style.css': Add a new CSS rule at the end to make all 'h2' elements have a 'color: navy'."\`
+    - **Moving/Copying/Deleting:** \`"Your work folder is /Users/steipete/my_project\\n\\nMove the file 'report.docx' from the 'drafts' folder to the 'final_reports' folder and rename it to 'Q1_Report_Final.docx'."\`
+
+3.  **Version Control (Git):** (As seen in \`claude_tool_git_example.png\`)
+    - \`"Your work folder is /Users/steipete/my_project\\n\\n1. Stage the file 'src/main.java'.\\n2. Commit the changes with the message 'feat: Implement user authentication'.\\n3. Push the commit to the 'develop' branch on origin."\`
+
+4.  **Running Terminal Commands:**
+    - \`"Your work folder is /Users/steipete/my_project/frontend\\n\\nRun the command 'npm run build'."\`
+    - \`"Open the URL https://developer.mozilla.org in my default web browser."\`
+
+5.  **Web Search & Summarization:**
+    - \`"Search the web for 'benefits of server-side rendering' and provide a concise summary."\`
+
+6.  **Complex Multi-Step Workflows:** (Like performing a full version bump, updating changelogs, and tagging a release, as previously demonstrated)
+    - \`"Your work folder is /Users/steipete/my_project\\n\\nFollow these steps: 1. Update the version in package.json to 2.5.0. 2. Add a new section to CHANGELOG.md for version 2.5.0 with the heading '### Added' and list 'New feature X'. 3. Stage package.json and CHANGELOG.md. 4. Commit with message 'release: version 2.5.0'. 5. Push the commit. 6. Create and push a git tag v2.5.0."\`
+
+7.  **Repairing Files with Syntax Errors:**
+    - \`"Your work folder is /path/to/project\\n\\nThe file 'src/utils/parser.js' has syntax errors after a recent complex edit that broke its structure. Please analyze it, identify the syntax errors, and correct the file to make it valid JavaScript again, ensuring the original logic is preserved as much as possible."\`
+
+**Prompting Best Practices:** The more detailed, clear, and well-structured your prompt, the better Claude can understand and execute your intent. For complex tasks, breaking them down into numbered steps within the prompt is highly effective.
+
+**Advanced Usage Tip:** When working with the \\\`code\\\` tool, you can set up complex workflows by using explicit step-by-step instructions. For example, instead of just asking \\\`"Fix the bugs in my code"\\\`, try: \\\`"Your work folder is /path/to/project\\n\\n1. Run the test suite to identify failing tests\\n2. Examine the failing tests to understand what's breaking\\n3. Check the relevant source files and fix the issues\\n4. Run the tests again to verify your fixes worked\\n5. Explain what you changed and why"\\\`
+
+\`options.tools\` can be used to specify which internal Claude tools (e.g., \`Bash\`, \`Read\`, \`Write\`) are allowed for the execution; common tools are enabled by default if this is omitted.`,
           inputSchema: {
             type: 'object',
             properties: {
               prompt: {
                 type: 'string',
-                description: 'The prompt to send to Claude Code',
+                description: 'The detailed natural language prompt for Claude to execute.',
               },
               options: {
                 type: 'object',
@@ -175,31 +209,13 @@ class ClaudeCodeServer {
                     items: {
                       type: 'string'
                     },
-                    description: 'Optional tools to enable',
+                    description: 'Optional internal Claude tools to enable (e.g., Bash, Read, Write).',
                   }
                 },
-                description: 'Additional options for Claude Code execution',
+                description: 'Additional options for Claude Code execution.',
               },
             },
             required: ['prompt'],
-          },
-        },
-        {
-          name: 'magic_file',
-          description: "Edits a specified file based on **natural language instructions**, leveraging the Claude Code CLI with its internal editing permissions bypassed (`--dangerously-skip-permissions`). Accepts both relative (resolved from workspace root) and absolute paths. Best for complex or semantic file modifications where describing the desired **intent** is easier than specifying exact line changes, such as: renaming variables/functions throughout the file, applying standard code patterns or formatting, converting syntax (e.g., Promises to async/await), or creating new files with standard boilerplate (e.g., \'\'\'Create a basic Express route file\'\'\'). Requires a `file_path` and a descriptive `instruction`. Acts as a powerful and robust alternative when standard diff-based editing tools struggle with ambiguity or large-scale changes.",
-          inputSchema: {
-            type: 'object',
-            properties: {
-              file_path: {
-                type: 'string',
-                description: 'The absolute path to the file to edit',
-              },
-              instruction: {
-                type: 'string',
-                description: 'Free text description of the edits to make to the file',
-              }
-            },
-            required: ['file_path', 'instruction'],
           },
         }
       ],
@@ -209,73 +225,59 @@ class ClaudeCodeServer {
     this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<ServerResult> => {
       try {
         let claudePrompt: string;
-        // Initialize with common args, specific args like -p will be added later
         const baseCommandArgs: string[] = ['--dangerously-skip-permissions'];
         let finalCommandArgs: string[];
 
-        const toolNameForLogging = request.params.name; // For clearer debug logs
+        const toolNameForLogging = request.params.toolName; // Use toolName from schema
 
         // Validate and construct the prompt based on the tool
-        if (request.params.name === 'code') {
+        if (request.params.toolName === 'code') { // Only 'code' tool remains
           const args = request.params.arguments as unknown as ClaudeCodeArgs;
           if (!args.prompt) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
-          const workDir = process.cwd(); // Get current working directory
-          claudePrompt = `Your work folder is ${workDir}\n\n${args.prompt}`; // Prepend workDir to the prompt
-          
+          claudePrompt = args.prompt;
+
+          if (debugMode) { 
+            console.error(`[Code Tool] Claude Prompt(direct from user): ${claudePrompt}`); 
+          }
+
           finalCommandArgs = [...baseCommandArgs];
           if (args.options?.tools) {
             finalCommandArgs.push('--tools', args.options.tools.join(','));
           }
-          finalCommandArgs.push('-p', claudePrompt); // Add prompt with -p flag
-
-        } else if (request.params.name === 'magic_file') {
-          const args = request.params.arguments as unknown as ClaudeFileEditArgs;
-          if (!args.file_path) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: file_path');
-          if (!args.instruction) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: instruction');
-          
-          // Construct a single natural language prompt for file editing.
-          // args.file_path is expected to be an absolute path (resolved by client or pre-resolved if needed).
-          // The current description for 'magic_file' inputSchema states 'file_path' is 'The absolute path to the file to edit'.
-          // If relative paths are possible from the client, path.resolve would be needed here.
-          // For now, trusting the schema description.
-          const absoluteFilePath = pathResolve(args.file_path); // Ensure absolute path
-          claudePrompt = `Edit file "${absoluteFilePath}": ${args.instruction}`;
-          
-          finalCommandArgs = [...baseCommandArgs, '-p', claudePrompt]; // Add prompt with -p flag
-          // No options.tools for magic_file according to its schema.
+          finalCommandArgs.push('-p', claudePrompt);
 
         } else {
-          // Unknown tool
-          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.name} not found`);
+          // Unknown tool - this case should ideally not be hit if ListTools is accurate
+          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.toolName} not found`);
         }
 
         // Unified execution logic
         try {
-          // Use finalCommandArgs which now includes '-p' and the prompt
           const { stdout } = await spawnAsync(this.claudeCliPath, finalCommandArgs);
-          // Use toolNameForLogging for more specific debug messages
-          if(debugMode) console.debug(`Claude CLI stdout (${toolNameForLogging}, plain text):`, stdout);
+          if (debugMode) {
+            console.debug(`Claude CLI stdout(${toolNameForLogging}, plain text):`, stdout);
+          }
           return { content: [{ type: 'text', text: stdout }] };
         } catch (error) {
           let errorMessage = `Unknown error during Claude CLI execution for tool ${toolNameForLogging}`;
           if (error instanceof Error) {
-              errorMessage = error.message;
+            errorMessage = error.message;
           }
-          console.error(`[Error] Tool execution failed (${toolNameForLogging}): ${errorMessage}`);
+          console.error(`[Error] Tool execution failed(${toolNameForLogging}): ${errorMessage}`);
           if (error instanceof McpError) {
             throw error; // Re-throw existing McpError
           }
           // Wrap other errors as InternalError
-          throw new McpError(ErrorCode.InternalError, `Tool execution failed (${toolNameForLogging}): ${errorMessage}`);
+          throw new McpError(ErrorCode.InternalError, `Tool execution failed(${toolNameForLogging}): ${errorMessage}`);
         }
 
       } catch (error) { // Catch errors from prompt construction or if an McpError was thrown above
         let errorMessage = 'Unknown error';
         if (error instanceof Error) {
-            errorMessage = error.message;
+          errorMessage = error.message;
         }
         // Ensure toolNameForLogging is available or use a generic message
-        const toolContext = request.params.name ? `for tool ${request.params.name}` : '';
+        const toolContext = request.params.toolName ? `for tool ${request.params.toolName}` : '';
         console.error(`[Error] Tool request processing failed ${toolContext}: ${errorMessage}`);
         if (error instanceof McpError) {
           throw error; // Re-throw existing McpError
@@ -290,7 +292,7 @@ class ClaudeCodeServer {
    * Start the MCP server
    */
   async run(): Promise<void> {
-     // Revert to original server start logic if listen caused errors
+    // Revert to original server start logic if listen caused errors
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('Claude Code MCP server running on stdio');
