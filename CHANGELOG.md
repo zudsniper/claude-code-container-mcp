@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2025-05-13
+
+### Added
+- Automatically prepend the current working directory (CWD) to the prompt for the `code` tool, providing better context to Claude Code.
+
 ## [1.0.0] - 2025-05-13
 
 ### Added

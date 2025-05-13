@@ -219,7 +219,8 @@ class ClaudeCodeServer {
         if (request.params.name === 'code') {
           const args = request.params.arguments as unknown as ClaudeCodeArgs;
           if (!args.prompt) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
-          claudePrompt = args.prompt;
+          const workDir = process.cwd(); // Get current working directory
+          claudePrompt = `Your work folder is ${workDir}\n\n${args.prompt}`; // Prepend workDir to the prompt
           
           finalCommandArgs = [...baseCommandArgs];
           if (args.options?.tools) {
