@@ -220,11 +220,6 @@ The server **does NOT automatically inject 'Your work folder is...'** into your 
         console.error(`[Claude Call] Using claude-code-mcp version: ${this.packageVersion}`);
 
         const toolName = req.params.name;
-        // The following detailed log is no longer needed as tool name issues are resolved.
-        // console.error(`[Debug] Received toolName: '${toolName}' (Type: ${typeof toolName}, Length: ${toolName.length})`);
-        // for (let i = 0; i < toolName.length; i++) {
-        //   console.error(`[Debug] Char ${i}: ${toolName.charCodeAt(i)} ('${toolName[i]}')`);
-        // }
 
         if (toolName !== 'code' && toolName !== 'claude') {
           console.error(`[Error] Tool name mismatch. Expected 'code' or 'claude', got: '${toolName}'`);
