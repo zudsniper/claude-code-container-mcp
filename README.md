@@ -207,6 +207,9 @@ The server provides two tools:
 
 <img src="cursor-screenshot.png" width="600" alt="Cursor Screenshot">
 
+<img src="claude_tool_git_example.png" width="600" alt="Screenshot of AI assistant using mcp1_code tool for git operations">
+Tools seem to prefer it even for git operations as it runs faster and in one shot.
+
 ## Troubleshooting
 
 - **Tool not showing up**: Check the Claude logs for errors when starting the MCP server. Ensure `start.sh` or `start.bat` is executable and `tsx` is installed and runnable (usually via `npx`).
