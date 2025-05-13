@@ -18,31 +18,21 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 ## Prerequisites
 
 - Node.js v20 or later (due to ES Module features like JSON import attributes being used).
-- Claude CLI installed and working. Ensure Claude CLI is installed and accessible, preferably by running `claude/doctor`. This installs/updates the CLI to `~/.claude/local/claude`, which this server checks by default.
+- Claude CLI installed locally (run it and call /doctor) and `-dangerously-skip-permissions` accepted.
 
 ## Installation & Usage
 
-The recommended way to use this server is by installing it globally via NPM or by using `npx`.
+The recommended way to use this server is by installing it by using `npx`.
 
-**1. Global Installation (Recommended)**
-
-Install the package globally using NPM:
-```bash
-npm install -g @steipete/claude-code-mcp
+```json
+    "claude-code-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@steipete/claude-code-mcp@latest"
+      ]
+    },
 ```
-This makes the `claude-code-mcp` command available system-wide.
-
-**2. Using with `npx` (No Global Install Needed)**
-
-You can run the server directly using `npx` without a global installation:
-```bash
-npx @steipete/claude-code-mcp
-```
-This is convenient for one-off uses or to ensure you're always running the latest version of the server. The server will be downloaded and run without polluting your global namespace.
-
-**For Developers: Local Setup & Contribution**
-
-If you want to develop or contribute to this server, or run it from a cloned repository for testing, please see our [Local Installation & Development Setup Guide](./docs/local_install.md).
 
 ## Important First-Time Setup: Accepting Permissions
 
@@ -50,12 +40,14 @@ If you want to develop or contribute to this server, or run it from a cloned rep
 
 This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
 ```bash
+npm install -g @anthropic-ai/claude-code
+```
+run claude and run /doctor
+
+```bash
 claude -p "hello" --dangerously-skip-permissions
 ```
-Or, if `claude` is not in your PATH but you're using the default install location:
-```bash
-~/.claude/local/claude -p "hello" --dangerously-skip-permissions
-```
+
 Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
 
 ## Connecting to Your MCP Client
@@ -66,16 +58,16 @@ After setting up the server, you need to configure your MCP client (like Cursor 
 
 The configuration is typically done in a JSON file. The name and location can vary depending on your client.
 
-#### For Cursor Users
+#### Cursor
 
-Cursor typically uses `mcp.json`. Common locations:
+Cursor uses `mcp.json`.
 - **macOS:** `~/.cursor/mcp.json`
 - **Windows:** `%APPDATA%\\Cursor\\mcp.json`
 - **Linux:** `~/.config/cursor/mcp.json`
 
-#### For VS Code (with Codeium Extension) & Windsurf
+#### Windsurf
 
-VS Code users, typically with the Codeium extension, and Windsurf users often use `mcp_config.json` located within a Codeium-specific directory. Common locations:
+Windsurf users use `mcp_config.json`
 - **macOS:** `~/.codeium/windsurf/mcp_config.json`
 - **Windows:** `%APPDATA%\\Codeium\\windsurf\\mcp_config.json`
 - **Linux:** `~/.config/.codeium/windsurf/mcp_config.json`
@@ -83,30 +75,6 @@ VS Code users, typically with the Codeium extension, and Windsurf users often us
 (Note: In some mixed setups, if Cursor is also installed, these clients might fall back to using Cursor's `~/.cursor/mcp.json` path. Prioritize the Codeium-specific paths if using the Codeium extension.)
 
 Create this file if it doesn't exist. Add or update the configuration for `claude_code`:
-
-**Example for Global Install (`claude-code-mcp`):**
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "type": "stdio",
-      "command": ["claude-code-mcp"]
-    }
-  }
-}
-```
-
-**Example for `npx` usage:**
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "type": "stdio",
-      "command": ["npx", "@steipete/claude-code-mcp"]
-    }
-  }
-}
-```
 
 ## Tools Provided
 
@@ -131,15 +99,15 @@ Executes a prompt directly using the Claude Code CLI with `--dangerously-skip-pe
 }
 ```
 
-## Configuration via Environment Variables
+### Examples
 
-The server's behavior can be customized using these environment variables:
+Here are some visual examples of the server in action:
 
-- `CLAUDE_CLI_PATH`: Absolute path to the Claude CLI executable.
-  - Default: Checks `~/.claude/local/claude`, then falls back to `claude` (expecting it in PATH).
-- `MCP_CLAUDE_DEBUG`: Set to `true` for verbose debug logging from this MCP server. Default: `false`.
+<img src="docs/claude_tool_git_example.png" alt="Claude Tool Git Example">
 
-These can be set in your shell environment or within the `env` block of your `mcp.json` server configuration (though the `env` block in `mcp.json` examples was removed for simplicity, it's still a valid way to set them for the server process if needed).
+<img src="docs/additional_claude_screenshot.png" alt="Additional Claude Screenshot">
+
+<img src="docs/cursor-screenshot.png" alt="Cursor Screenshot">
 
 ## Key Use Cases
 
@@ -178,22 +146,6 @@ This server, through its unified `code` tool, unlocks a wide range of powerful c
 
 **CRITICAL: Remember to provide Current Working Directory (CWD) context in your prompts for file system or git operations (e.g., `"Your work folder is /path/to/project\n\n...your command..."`).**
 
-### Examples
-
-Here are some visual examples of the server in action:
-
-**Claude Tool Git Example:**
-
-<img src="docs/claude_tool_git_example.png" alt="Claude Tool Git Example">
-
-**Additional Claude Screenshot:**
-
-<img src="docs/additional_claude_screenshot.png" alt="Additional Claude Screenshot">
-
-**Cursor Screenshot:**
-
-<img src="docs/cursor-screenshot.png" alt="Cursor Screenshot">
-
 ## Troubleshooting
 
 - **"Command not found" (claude-code-mcp):** If installed globally, ensure the npm global bin directory is in your system's PATH. If using `npx`, ensure `npx` itself is working.
@@ -201,6 +153,20 @@ Here are some visual examples of the server in action:
 - **Permissions Issues:** Make sure you've run the "Important First-Time Setup" step.
 - **JSON Errors from Server:** If `MCP_CLAUDE_DEBUG` is `true`, error messages or logs might interfere with MCP's JSON parsing. Set to `false` for normal operation.
 - **ESM/Import Errors:** Ensure you are using Node.js v20 or later.
+
+**For Developers: Local Setup & Contribution**
+
+If you want to develop or contribute to this server, or run it from a cloned repository for testing, please see our [Local Installation & Development Setup Guide](./docs/local_install.md).
+
+## Configuration via Environment Variables
+
+The server's behavior can be customized using these environment variables:
+
+- `CLAUDE_CLI_PATH`: Absolute path to the Claude CLI executable.
+  - Default: Checks `~/.claude/local/claude`, then falls back to `claude` (expecting it in PATH).
+- `MCP_CLAUDE_DEBUG`: Set to `true` for verbose debug logging from this MCP server. Default: `false`.
+
+These can be set in your shell environment or within the `env` block of your `mcp.json` server configuration (though the `env` block in `mcp.json` examples was removed for simplicity, it's still a valid way to set them for the server process if needed).
 
 ## Contributing
 
