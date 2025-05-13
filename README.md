@@ -28,7 +28,7 @@ The recommended way to use this server is by installing it globally via NPM or b
 
 Install the package globally using NPM:
 ```bash
-npm install -g claude-mcp-server
+npm install -g @steipete/claude-code-mcp
 ```
 This makes the `claude-code-mcp` command available system-wide.
 
@@ -36,7 +36,7 @@ This makes the `claude-code-mcp` command available system-wide.
 
 You can run the server directly using `npx` without a global installation:
 ```bash
-npx claude-mcp-server
+npx @steipete/claude-code-mcp
 ```
 This is convenient for one-off uses or to ensure you're always running the latest version of the server. The server will be downloaded and run without polluting your global namespace.
 
@@ -93,7 +93,7 @@ Create this file if it doesn't exist. Add or update the configuration for `claud
   "mcpServers": {
     "claude_code": {
       "type": "stdio",
-      "command": ["npx", "claude-mcp-server"],
+      "command": ["npx", "@steipete/claude-code-mcp"],
       "args": [],
       "env": {
         "MCP_CLAUDE_DEBUG": "false"
