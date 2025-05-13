@@ -21,155 +21,86 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 - TypeScript (for development)
 - Claude CLI installed and working. Ensure Claude CLI is installed and accessible, preferably by running `/doctor`. This installs/updates the CLI to `~/.claude/local/claude`, which this server checks by default.
 
-## Installation
+## Setup
 
-1. Clone or download this repository:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/steipete/claude-code-mcp.git
+    cd claude-code-mcp
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Configure MCP:**
+    Ensure your `~/.codeium/windsurf/mcp_config.json` (or equivalent Codeium MCP configuration file) includes an entry for this server. The `claude_code` MCP server uses the `stdio` type.
 
-```bash
-git clone https://github.com/yourusername/claude-mcp-server.git
-cd claude-mcp-server
+    ```json
+    {
+      "mcpServers": {
+        "claude_code": {
+          "type": "stdio",
+          "command": "/path/to/your/claude-code-mcp/start.sh", // <-- IMPORTANT: Use absolute path
+          "args": []
+        }
+        // ... other MCP server configurations
+      }
+    }
+    ```
+    Replace `/path/to/your/claude-code-mcp/start.sh` with the absolute path to the `start.sh` script in your cloned repository.
+
+4.  **Permissions for Claude CLI (First-Time Setup):**
+    The `start.sh` script attempts to run the Claude CLI (e.g., `claude`) with the `--dangerously-skip-permissions` flag. For this to work the first time you run `claude` or if permissions haven't been granted, you might need to run the Claude CLI manually once from your terminal with this flag to accept any necessary permissions or setup steps it requires:
+    ```bash
+    claude --dangerously-skip-permissions query "What is the capital of France?"
+    ```
+    Alternatively, ensure the Claude CLI is configured to allow non-interactive execution with these permissions. Refer to your Claude CLI documentation for details.
+
+### Alternative: NPX-Based Setup (If Published)
+
+Many MCP servers simplify setup by being published to NPM and run via `npx`. If this `claude-mcp-server` were published to NPM (e.g., as `@your-npm-username/claude-mcp-server`), its configuration in `mcp_config.json` could look like this:
+
+```json
+{
+  "mcpServers": {
+    "claude_code": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@your-npm-username/claude-mcp-server@latest"
+      ]
+      // Potentially 'env' vars if the npx package requires API keys, etc.
+    }
+    // ... other MCP server configurations
+  }
+}
 ```
 
-2. Install dependencies (this will also install `tsx` for direct TypeScript execution):
+This `npx` approach means you wouldn't need to clone the repository and point to a local script. `npx` would handle fetching and running the package.
 
-```bash
-npm install
-```
-
-3. Make the start script executable:
-
-```bash
-chmod +x start.sh
-```
-
-## Important First-Time Setup: Accepting Permissions
-
-**Before the MCP server can successfully use the `code` tool, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
-
-This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
-
-```bash
-claude -p "hello" --dangerously-skip-permissions
-```
-
-Or, if `claude` is not in your PATH but you're using the default install location:
-
-```bash
-~/.claude/local/claude -p "hello" --dangerously-skip-permissions
-```
-
-Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
+**For current local development and usage of this repository, the `start.sh` method detailed above is the recommended approach.** The `npx` example is provided for illustrative purposes, anticipating a potential future where the server is distributed as an NPM package.
 
 ## Connecting to Cursor/Windsurf/Visual Studio Code
 
+To connect this MCP server to your client (like Cursor, a Windsurf-enabled VS Code, etc.), you need to add its configuration to your MCP JSON file.
+
 ### macOS
 
-1. Locate the MCP configuration file:
-   ```
-   ~/.cursor/mcp.json
-   ```
-   Create this file if it doesn't exist.
-
-2. Add the server configuration to the file:
-
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "type": "stdio",
-      "command": "/absolute/path/to/claude-mcp-server/start.sh",
-      "args": []
-    }
-  }
-}
-```
-
-Make sure to replace `/absolute/path/to/claude-mcp-server` with the actual path to where you installed this server.
+1.  The typical MCP configuration file path is `~/.cursor/mcp.json` (for older Cursor setups) or `~/.codeium/windsurf/mcp_config.json` (for newer Codeium/Windsurf setups). Create this file if it doesn't exist.
+2.  Add the server configuration to this file as detailed in **Step 3 of the main `## Setup` section** above. Ensure you use the absolute path to the `start.sh` script.
 
 ### Windows
 
-1. Locate the MCP configuration file:
-   ```
-   %APPDATA%\cursor\mcp.json
-   ```
-   Create this file if it doesn't exist.
-
-2. Add the server configuration to the file, making sure to use Windows path format:
-
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "type": "stdio",
-      "command": "C:\\path\\to\\claude-mcp-server\\start.bat",
-      "args": []
-    }
-  }
-}
-```
-
-For Windows, you should use the batch file (start.bat) instead of the shell script.
+1.  The typical MCP configuration file path is `%USERPROFILE%\.cursor\mcp.json` or `%USERPROFILE%\.codeium\windsurf\mcp_config.json`.
+2.  Add the server configuration as detailed in **Step 3 of the main `## Setup` section**, using the absolute path to `start.sh`.
 
 ### Linux
 
-1. Locate the MCP configuration file:
-   ```
-   ~/.config/cursor/mcp.json
-   ```
-   Create this file if it doesn't exist.
+1.  The typical MCP configuration file path is `~/.config/Code - OSS/mcp_config.json`, `~/.config/VSCodium/mcp_config.json`, `~/.config/cursor/mcp.json`, or `~/.codeium/windsurf/mcp_config.json` depending on your VS Code flavor or client.
+2.  Add the server configuration as detailed in **Step 3 of the main `## Setup` section**, using the absolute path to `start.sh`.
 
-2. Add the server configuration to the file:
-
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "type": "stdio",
-      "command": "/absolute/path/to/claude-mcp-server/start.sh",
-      "args": []
-    }
-  }
-}
-```
-
-3. After updating the configuration, restart your IDE to load the MCP server.
-
-## Environment Variables
-
-You can customize the server behavior with the following environment variables (edit them in `start.sh` or `start.bat`):
-
-- `CLAUDE_CLI_PATH`: **Optional.** Set a custom absolute path to the Claude CLI executable. If set and the path points to an existing file, this path will be used directly.
-- `MCP_CLAUDE_DEBUG`: Set to `true` to enable verbose debug logging from the server to stderr (e.g., `MCP_CLAUDE_DEBUG=true ./start.sh`).
-
-**Claude CLI Discovery Order:**
-1.  The path specified by the `CLAUDE_CLI_PATH` environment variable (if set and valid).
-2.  The default installation path for Unix-like systems: `~/.claude/local/claude` (where `~` is the user's home directory). For Windows users, this automatic check may not apply; relying on `CLAUDE_CLI_PATH` or ensuring `claude` is in the system PATH is recommended.
-3.  Defaults to simply `claude`, relying on the system's PATH for resolution (a warning will be logged if this fallback is used).
-
-## Connecting to VSCode Claude
-
-To use this MCP server with Claude in VSCode:
-
-1. Install the Claude extension in VSCode
-
-2. Create or edit the MCP settings file:
-   ```
-   ~/.vscode/extensions/saoudrizwan.claude-dev/settings/cline_mcp_settings.json
-   ```
-
-3. Add the server configuration:
-
-```json
-{
-  "mcpServers": {
-    "claude_code": {
-      "command": "/absolute/path/to/claude-mcp-server/start.sh",
-      "args": [],
-      "disabled": false
-    }
-  }
-}
-```
+Ensure the client application (Cursor, VS Code) is restarted after modifying the MCP configuration file for changes to take effect.
 
 ## Usage
 
