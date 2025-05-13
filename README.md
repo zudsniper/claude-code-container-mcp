@@ -17,7 +17,7 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 
 ## Prerequisites
 
-- Node.js v20 or later (due to ES Module features like JSON import attributes being used).
+- Node.js v20 or later (Use fnm or nvm to install)
 - Claude CLI installed locally (run it and call /doctor) and `-dangerously-skip-permissions` accepted.
 
 ## Installation & Usage
@@ -36,16 +36,15 @@ The recommended way to use this server is by installing it by using `npx`.
 
 ## Important First-Time Setup: Accepting Permissions
 
-**Before the MCP server can successfully use the `code` tool, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag and accept the terms.**
+**Before the MCP server can successfully use the `code` tool, you must first run the Claude CLI manually once with the `--dangerously-skip-permissions` flag, login and accept the terms.**
 
-This is a one-time requirement by the Claude CLI. You can do this by running a simple command in your terminal, for example:
+This is a one-time requirement by the Claude CLI.
+
 ```bash
 npm install -g @anthropic-ai/claude-code
 ```
-run claude and run /doctor
-
 ```bash
-claude -p "hello" --dangerously-skip-permissions
+claude --dangerously-skip-permissions
 ```
 
 Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
