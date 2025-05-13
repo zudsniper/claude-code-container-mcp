@@ -138,12 +138,8 @@ The server's behavior can be customized using these environment variables:
 - `CLAUDE_CLI_PATH`: Absolute path to the Claude CLI executable.
   - Default: Checks `~/.claude/local/claude`, then falls back to `claude` (expecting it in PATH).
 - `MCP_CLAUDE_DEBUG`: Set to `true` for verbose debug logging from this MCP server. Default: `false`.
-- `CLAUDE_CLI_TOOLS_DEFAULT`: A comma-separated string of Claude tools to enable by default if not specified in the request (e.g., "Bash,Read,Write").
-  - Default: `Bash,Read,Write,DiffPreview,DiffApply,FileTree,FileSearch,CodeSearch`
-- `CLAUDE_CLI_TOOLS_DANGEROUS`: A comma-separated string of Claude tools to always enable, regardless of request options.
-  - Default: `DiffApply` (as it's crucial for applying changes).
 
-These can be set in your shell environment or within the `env` block of your `mcp.json` server configuration.
+These can be set in your shell environment or within the `env` block of your `mcp.json` server configuration (though the `env` block in `mcp.json` examples was removed for simplicity, it's still a valid way to set them for the server process if needed).
 
 ## Troubleshooting
 
