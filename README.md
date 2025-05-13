@@ -49,6 +49,8 @@ claude --dangerously-skip-permissions
 
 Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
 
+macOS might ask for all kind of folder permissions the first time the tool runs and the first run then fails. Subsequent runs will work.
+
 ## Connecting to Your MCP Client
 
 After setting up the server, you need to configure your MCP client (like Cursor or others that use `mcp.json` or `mcp_config.json`).
