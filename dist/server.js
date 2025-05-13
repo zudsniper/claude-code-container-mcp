@@ -6,58 +6,51 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import which from 'which';
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
 /**
- * Find the Claude CLI executable path
- * Tries multiple common locations
+ * Determine the Claude CLI command/path.
+ * 1. Checks CLAUDE_CLI_PATH environment variable.
+ * 2. Checks for Claude CLI at ~/.claude/local/claude.
+ * 3. Defaults to 'claude' if not found, relying on spawn() to perform PATH lookup.
  */
 function findClaudeCli(debugMode) {
-    // Check environment variable first
+    // 1. Check environment variable first
     if (debugMode)
         console.error('[Debug] Checking for CLAUDE_CLI_PATH environment variable...');
-    if (process.env.CLAUDE_CLI_PATH && existsSync(process.env.CLAUDE_CLI_PATH)) {
+    const envPath = process.env.CLAUDE_CLI_PATH;
+    if (envPath && existsSync(envPath)) {
         if (debugMode)
-            console.error(`[Debug] Found Claude CLI via environment variable: ${process.env.CLAUDE_CLI_PATH}`);
-        return process.env.CLAUDE_CLI_PATH;
+            console.error(`[Debug] Using Claude CLI from environment variable: ${envPath}`);
+        return envPath;
     }
-    // Try finding with the 'which' package
+    if (envPath) {
+        if (debugMode)
+            console.error(`[Debug] CLAUDE_CLI_PATH (${envPath}) was set but file does not exist. Checking default user path.`);
+    }
+    // 2. Check default user path: ~/.claude/local/claude
+    if (debugMode)
+        console.error('[Debug] Checking for Claude CLI at default user path (~/.claude/local/claude)...');
     try {
-        const claudePathFromWhich = which.sync('claude');
-        if (debugMode)
-            console.error(`[Debug] Found Claude CLI via which package: ${claudePathFromWhich}`);
-        return claudePathFromWhich;
-    }
-    catch (e) {
-        if (debugMode)
-            console.error(`[Debug] 'which' package could not find claude in PATH: ${e}`);
-    }
-    // Common Claude CLI locations
-    if (debugMode)
-        console.error('[Debug] Checking common Claude CLI locations...');
-    const possiblePaths = [
-        join(homedir(), '.claude', 'local', 'claude'),
-        join(homedir(), '.local', 'bin', 'claude'),
-        join(homedir(), 'bin', 'claude'),
-        '/usr/local/bin/claude',
-        '/usr/bin/claude',
-        'claude', // Fallback to PATH
-    ];
-    for (const path of possiblePaths) {
-        const exists = existsSync(path);
-        if (debugMode)
-            console.error(`[Debug] Checking path: ${path}, Exists: ${exists}`);
-        if (exists) {
+        const userPath = join(homedir(), '.claude', 'local', 'claude');
+        if (existsSync(userPath)) {
             if (debugMode)
-                console.error(`[Debug] Found Claude CLI at: ${path}`);
-            return path;
+                console.error(`[Debug] Found Claude CLI at default user path: ${userPath}`);
+            return userPath;
         }
+        // If not returned, it means userPath does not exist, so log it.
+        if (debugMode)
+            console.error(`[Debug] Claude CLI not found at default user path: ${userPath}.`);
     }
-    // Default to PATH if not found
+    catch (err) {
+        if (debugMode)
+            console.error(`[Debug] Error checking default user path: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    // 3. Default to 'claude' command name
     if (debugMode)
-        console.error('[Debug] Claude CLI not found in common locations. Falling back to "claude" in PATH.');
-    return 'claude';
+        console.error('[Debug] CLAUDE_CLI_PATH not set or invalid, and not found at default user path. Defaulting to "claude" command name, relying on spawn/PATH lookup.');
+    console.warn('[Warning] Claude CLI not found via CLAUDE_CLI_PATH or at ~/.claude/local/claude. Falling back to "claude" in PATH. Ensure it is installed and accessible.');
+    return 'claude'; // Return base command name
 }
 // Ensure spawnAsync is defined correctly *before* the class
 async function spawnAsync(command, args, options) {
@@ -107,10 +100,11 @@ async function spawnAsync(command, args, options) {
  */
 class ClaudeCodeServer {
     server;
-    claudeCliPath;
+    claudeCliPath; // This now holds either a full path or just 'claude'
     constructor() {
-        this.claudeCliPath = findClaudeCli(debugMode); // Use global debugMode
-        console.error(`[Setup] Using Claude CLI at: ${this.claudeCliPath}`); // Log to stderr (may be hidden)
+        // Use the simplified findClaudeCli function
+        this.claudeCliPath = findClaudeCli(debugMode);
+        console.error(`[Setup] Using Claude CLI command/path: ${this.claudeCliPath}`);
         this.server = new Server({
             name: 'claude_code',
             version: '1.0.0',
@@ -135,7 +129,7 @@ class ClaudeCodeServer {
             tools: [
                 {
                     name: 'code',
-                    description: 'Claude Code is an AI that has system tools to edit files, search the web and access mcp tools can do basically anything as it is an AI. It can modify files, fix bugs, and refactor code across your entire project.',
+                    description: "Executes a given prompt directly with the Claude Code CLI, bypassing all permission checks (`--dangerously-skip-permissions`). Ideal for a wide range of tasks including: complex code generation, analysis, and refactoring; performing web searches and summarizing content; running arbitrary terminal commands (e.g., `open .` to open Finder, `open -a Calculator` to open apps, or `open https://example.com` to open a URL in a web browser). For example, you could open a GitHub PR page once all tests are green. Handles general tasks requiring the Claude CLI's broad capabilities without interactive prompts. `options.tools` can be used to specify internal Claude tools (e.g., `Bash`, `Read`, `Write`); common tools are enabled by default if this is omitted.",
                     inputSchema: {
                         type: 'object',
                         properties: {
@@ -162,7 +156,7 @@ class ClaudeCodeServer {
                 },
                 {
                     name: 'magic_file',
-                    description: 'Edit any file with a free text description. Is your edit_file tool not working again? Tell me what file and the contents and I\'ll figure it out!',
+                    description: "Edits a specified file based on natural language instructions, leveraging the Claude Code CLI with all editing permissions bypassed (`--dangerously-skip-permissions`). Best for complex or semantic file modifications where describing the desired change in plain language is more effective than precise line-by-line edits. Requires an absolute `file_path` and a descriptive `instruction`. Also a great alternative if a general-purpose `edit_file` tool is struggling with complex edits or specific file types. Example instructions: '''Refactor the processData function to use async/await instead of promises.''', '''Delete the unused calculateTotal function.''', '''Create a new file named utils.js and move the helper functions into it.''', '''Add a comment explaining the purpose of the fetchData method.'''",
                     inputSchema: {
                         type: 'object',
                         properties: {
@@ -187,37 +181,73 @@ class ClaudeCodeServer {
                 if (request.params.name === 'code') {
                     const args = request.params.arguments;
                     if (!args.prompt)
-                        throw new McpError(ErrorCode.InvalidParams, 'prompt');
-                    const command = this.claudeCliPath;
-                    const commandArgs = ['--dangerously-skip-permissions', '-p', args.prompt];
-                    if (args.options?.tools?.length) {
-                        commandArgs.push('--allowedTools', args.options.tools.join(' '));
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
+                    const claudeCLI = findClaudeCli(debugMode);
+                    if (!claudeCLI) {
+                        throw new McpError(ErrorCode.InternalError, 'Claude CLI not found.');
                     }
-                    else {
-                        commandArgs.push('--allowedTools', "Bash Read Write Edit MultiEdit Glob Grep LS Task Batch");
+                    const commandArgs = [
+                        '--dangerously-skip-permissions',
+                        args.prompt,
+                    ];
+                    if (args.options?.tools) {
+                        commandArgs.push('--tools', args.options.tools.join(','));
                     }
-                    const { stdout, stderr } = await spawnAsync(command, commandArgs);
-                    if (stderr && debugMode)
-                        console.error(`[Warning] Command stderr (full): ${stderr}`);
-                    const diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\n`;
-                    return { content: [{ type: 'text', text: diagnosticPrefix + stdout }] };
+                    try {
+                        const { stdout } = await spawnAsync(claudeCLI, commandArgs);
+                        // Output is now plain text
+                        console.debug('Claude CLI stdout (code, plain text):', stdout);
+                        return { content: [{ type: 'text', text: stdout }] };
+                    }
+                    catch (error) {
+                        let errorMessage = 'Unknown error during Claude CLI execution';
+                        if (error instanceof Error) {
+                            errorMessage = error.message;
+                        }
+                        console.error(`[Error] Tool execution failed: ${errorMessage}`);
+                        if (error instanceof McpError) {
+                            throw error; // Re-throw existing McpError
+                        }
+                        // Wrap other errors as InternalError
+                        throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
+                    }
                 }
                 // Handle magic_file tool
                 if (request.params.name === 'magic_file') {
                     const args = request.params.arguments;
                     if (!args.file_path)
-                        throw new McpError(ErrorCode.InvalidParams, 'file_path');
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: file_path');
                     if (!args.instruction)
-                        throw new McpError(ErrorCode.InvalidParams, 'instruction');
-                    const prompt = `Edit file "${args.file_path}": ${args.instruction}`;
-                    const command = this.claudeCliPath;
-                    const commandArgs = ['--dangerously-skip-permissions', '-p', prompt];
-                    commandArgs.push('--allowedTools', "Read Write Edit MultiEdit Glob Grep LS Bash");
-                    const { stdout, stderr } = await spawnAsync(command, commandArgs, { timeout: 60000 });
-                    if (stderr && debugMode)
-                        console.error(`[Warning] Command stderr (full): ${stderr}`);
-                    const diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\n`;
-                    return { content: [{ type: 'text', text: diagnosticPrefix + stdout }] };
+                        throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: instruction');
+                    const claudeCLI = findClaudeCli(debugMode);
+                    if (!claudeCLI) {
+                        throw new McpError(ErrorCode.InternalError, 'Claude CLI not found.');
+                    }
+                    const commandArgs = [
+                        '--dangerously-skip-permissions',
+                        'magic-file',
+                        '--file-path',
+                        args.file_path,
+                        args.instruction,
+                    ];
+                    try {
+                        const { stdout } = await spawnAsync(claudeCLI, commandArgs);
+                        // Output is now plain text
+                        console.debug('Claude CLI stdout (magic-file, plain text):', stdout);
+                        return { content: [{ type: 'text', text: stdout }] };
+                    }
+                    catch (error) {
+                        let errorMessage = 'Unknown error during Claude CLI magic-file execution';
+                        if (error instanceof Error) {
+                            errorMessage = error.message;
+                        }
+                        console.error(`[Error] Tool execution failed: ${errorMessage}`);
+                        if (error instanceof McpError) {
+                            throw error; // Re-throw existing McpError
+                        }
+                        // Wrap other errors as InternalError
+                        throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
+                    }
                 }
                 // Unknown tool - Use MethodNotFound if ToolNotFound is incorrect
                 throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.name} not found`);

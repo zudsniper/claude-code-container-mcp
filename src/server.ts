@@ -6,11 +6,12 @@ import {
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
+  type ServerResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve as pathResolve } from 'node:path';
 
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
@@ -25,12 +26,17 @@ function findClaudeCli(debugMode: boolean): string {
   // 1. Check environment variable first
   if (debugMode) console.error('[Debug] Checking for CLAUDE_CLI_PATH environment variable...');
   const envPath = process.env.CLAUDE_CLI_PATH;
-  if (envPath && existsSync(envPath)) {
-    if (debugMode) console.error(`[Debug] Using Claude CLI from environment variable: ${envPath}`);
-    return envPath;
-  }
-  if (envPath) { 
-    if (debugMode) console.error(`[Debug] CLAUDE_CLI_PATH (${envPath}) was set but file does not exist. Checking default user path.`);
+
+  if (envPath) {
+    if (debugMode) console.error(`[Debug] CLAUDE_CLI_PATH is set to: "${envPath}".`);
+    if (existsSync(envPath)) {
+      if (debugMode) console.error(`[Debug] Found Claude CLI via CLAUDE_CLI_PATH: "${envPath}". Using this path.`);
+      return envPath;
+    }
+    // If existsSync(envPath) was false, we reach here.
+    if (debugMode) console.error(`[Debug] CLAUDE_CLI_PATH "${envPath}" was set, but the file does not exist. Checking default user path next.`);
+  } else {
+    if (debugMode) console.error('[Debug] CLAUDE_CLI_PATH environment variable is not set. Checking default user path next.');
   }
 
   // 2. Check default user path: ~/.claude/local/claude
@@ -180,7 +186,7 @@ class ClaudeCodeServer {
         },
         {
           name: 'magic_file',
-          description: "Edits a specified file based on natural language instructions, leveraging the Claude Code CLI with all editing permissions bypassed (`--dangerously-skip-permissions`). Best for complex or semantic file modifications where describing the desired change in plain language is more effective than precise line-by-line edits. Requires an absolute `file_path` and a descriptive `instruction`. Also a great alternative if a general-purpose `edit_file` tool is struggling with complex edits or specific file types. Example instructions: '''Refactor the processData function to use async/await instead of promises.''', '''Delete the unused calculateTotal function.''', '''Create a new file named utils.js and move the helper functions into it.''', '''Add a comment explaining the purpose of the fetchData method.'''",
+          description: "Edits a specified file based on natural language instructions, leveraging the Claude Code CLI with all editing permissions bypassed (`--dangerously-skip-permissions`). Accepts both relative paths (resolved from the server's workspace root) and absolute paths. Best for complex or semantic file modifications where describing the desired change in plain language is more effective than precise line-by-line edits. Requires a `file_path` and a descriptive `instruction`. Also a great alternative if a general-purpose `edit_file` tool is struggling with complex edits or specific file types. Example instructions: '''Refactor the processData function to use async/await instead of promises.''', '''Delete the unused calculateTotal function.''', '''Create a new file named utils.js and move the helper functions into it.''', '''Add a comment explaining the purpose of the fetchData method.'''",
           inputSchema: {
             type: 'object',
             properties: {
@@ -200,96 +206,81 @@ class ClaudeCodeServer {
     }));
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<ServerResult> => {
       try {
-        // Handle code tool
+        let claudePrompt: string;
+        // Initialize with common args, specific args like -p will be added later
+        const baseCommandArgs: string[] = ['--dangerously-skip-permissions'];
+        let finalCommandArgs: string[];
+
+        const toolNameForLogging = request.params.name; // For clearer debug logs
+
+        // Validate and construct the prompt based on the tool
         if (request.params.name === 'code') {
           const args = request.params.arguments as unknown as ClaudeCodeArgs;
           if (!args.prompt) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: prompt');
-          const command = this.claudeCliPath;
-          const commandArgs: string[] = ['--dangerously-skip-permissions', '--output-format', 'json', '-p', args.prompt];
-          if (args.options?.tools?.length) {
-            commandArgs.push('--allowedTools', args.options.tools.join(' '));
-          } else {
-            commandArgs.push('--allowedTools', "Bash Read Write Edit MultiEdit Glob Grep LS Task Batch");
-          }
-          const { stdout, stderr } = await spawnAsync(command, commandArgs);
-          if (stderr && debugMode) console.error(`[Warning] Command stderr (full): ${stderr}`);
+          claudePrompt = args.prompt;
           
-          // Attempt to parse the JSON output from Claude CLI
-          let resultText = 'Error: Failed to parse Claude CLI output.';
-          let diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nExtracted Result:\n`;
-          try {
-            const parsedJson = JSON.parse(stdout);
-            resultText = parsedJson.result || 'Error: No result field found in Claude CLI JSON output.';
-
-            // Log extra info in debug mode
-            if (debugMode) {
-              console.error(`[Debug] Claude Cost (USD): ${parsedJson.cost_usd ?? 'N/A'}`);
-              console.error(`[Debug] Claude Duration (ms): ${parsedJson.duration_ms ?? 'N/A'}`);
-              console.error(`[Debug] Claude Session ID: ${parsedJson.session_id ?? 'N/A'}`);
-            }
-
-          } catch (parseError) {
-            console.error(`[Error] Failed to parse JSON from Claude CLI stdout: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-            console.error(`[Error] Raw stdout was: ${stdout}`);
-            resultText = `Error: Invalid JSON received from Claude CLI. Raw output: ${stdout}`;
-            diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nError Parsing Result:\n`;
+          finalCommandArgs = [...baseCommandArgs];
+          if (args.options?.tools) {
+            finalCommandArgs.push('--tools', args.options.tools.join(','));
           }
-          
-          return { content: [{ type: 'text', text: diagnosticPrefix + resultText }] };
-        }
+          finalCommandArgs.push('-p', claudePrompt); // Add prompt with -p flag
 
-        // Handle magic_file tool
-        if (request.params.name === 'magic_file') {
+        } else if (request.params.name === 'magic_file') {
           const args = request.params.arguments as unknown as ClaudeFileEditArgs;
           if (!args.file_path) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: file_path');
           if (!args.instruction) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: instruction');
-          const prompt = `Edit file "${args.file_path}": ${args.instruction}`;
-          const command = this.claudeCliPath;
-          const commandArgs: string[] = ['--dangerously-skip-permissions', '--output-format', 'json', '-p', prompt];
-          commandArgs.push('--allowedTools', "Read Write Edit MultiEdit Glob Grep LS Bash");
-          const { stdout, stderr } = await spawnAsync(command, commandArgs, { timeout: 60000 });
-          if (stderr && debugMode) console.error(`[Warning] Command stderr (full): ${stderr}`);
+          
+          // Construct a single natural language prompt for file editing.
+          // args.file_path is expected to be an absolute path (resolved by client or pre-resolved if needed).
+          // The current description for 'magic_file' inputSchema states 'file_path' is 'The absolute path to the file to edit'.
+          // If relative paths are possible from the client, path.resolve would be needed here.
+          // For now, trusting the schema description.
+          const absoluteFilePath = pathResolve(args.file_path); // Ensure absolute path
+          claudePrompt = `Edit file "${absoluteFilePath}": ${args.instruction}`;
+          
+          finalCommandArgs = [...baseCommandArgs, '-p', claudePrompt]; // Add prompt with -p flag
+          // No options.tools for magic_file according to its schema.
 
-          // Attempt to parse the JSON output from Claude CLI
-          let resultText = 'Error: Failed to parse Claude CLI output.';
-          let diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nExtracted Result:\n`;
-          try {
-            const parsedJson = JSON.parse(stdout);
-            resultText = parsedJson.result || 'Error: No result field found in Claude CLI JSON output.';
-
-            // Log extra info in debug mode
-            if (debugMode) {
-              console.error(`[Debug] Claude Cost (USD): ${parsedJson.cost_usd ?? 'N/A'}`);
-              console.error(`[Debug] Claude Duration (ms): ${parsedJson.duration_ms ?? 'N/A'}`);
-              console.error(`[Debug] Claude Session ID: ${parsedJson.session_id ?? 'N/A'}`);
-            }
-
-          } catch (parseError) {
-            console.error(`[Error] Failed to parse JSON from Claude CLI stdout: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-            console.error(`[Error] Raw stdout was: ${stdout}`);
-            resultText = `Error: Invalid JSON received from Claude CLI. Raw output: ${stdout}`;
-            diagnosticPrefix = `[Debug Info] Used CLI: ${this.claudeCliPath}\n---\nError Parsing Result:\n`;
-          }
-
-          return { content: [{ type: 'text', text: diagnosticPrefix + resultText }] };
+        } else {
+          // Unknown tool
+          throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.name} not found`);
         }
 
-        // Unknown tool - Use MethodNotFound if ToolNotFound is incorrect
-        throw new McpError(ErrorCode.MethodNotFound, `Tool ${request.params.name} not found`);
+        // Unified execution logic
+        try {
+          // Use finalCommandArgs which now includes '-p' and the prompt
+          const { stdout } = await spawnAsync(this.claudeCliPath, finalCommandArgs);
+          // Use toolNameForLogging for more specific debug messages
+          if(debugMode) console.debug(`Claude CLI stdout (${toolNameForLogging}, plain text):`, stdout);
+          return { content: [{ type: 'text', text: stdout }] };
+        } catch (error) {
+          let errorMessage = `Unknown error during Claude CLI execution for tool ${toolNameForLogging}`;
+          if (error instanceof Error) {
+              errorMessage = error.message;
+          }
+          console.error(`[Error] Tool execution failed (${toolNameForLogging}): ${errorMessage}`);
+          if (error instanceof McpError) {
+            throw error; // Re-throw existing McpError
+          }
+          // Wrap other errors as InternalError
+          throw new McpError(ErrorCode.InternalError, `Tool execution failed (${toolNameForLogging}): ${errorMessage}`);
+        }
 
-      } catch (error) { // Use generic 'error' type for catch
+      } catch (error) { // Catch errors from prompt construction or if an McpError was thrown above
         let errorMessage = 'Unknown error';
         if (error instanceof Error) {
             errorMessage = error.message;
         }
-        console.error(`[Error] Tool execution failed: ${errorMessage}`);
+        // Ensure toolNameForLogging is available or use a generic message
+        const toolContext = request.params.name ? `for tool ${request.params.name}` : '';
+        console.error(`[Error] Tool request processing failed ${toolContext}: ${errorMessage}`);
         if (error instanceof McpError) {
           throw error; // Re-throw existing McpError
         }
         // Wrap other errors as InternalError
-        throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
+        throw new McpError(ErrorCode.InternalError, `Tool request processing failed ${toolContext}: ${errorMessage}`);
       }
     });
   }
