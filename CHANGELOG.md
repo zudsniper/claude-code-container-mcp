@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0] - 2025-05-13
+
+### Added
+- More example screenshots to `README.md`.
+- Detailed example of a complex multi-step prompt for the `code` tool in `README.md`.
+- `@eslint/js` dependency (via user update to `package.json`).
+
+### Changed
+- Significantly enhanced the `code` tool description in `README.md` to highlight its power for complex tasks and encourage ambitious use.
+- Updated the `code` tool description within `src/server.ts` to align with the enhanced `README.md` version.
+- Clarified in `README.md` that the server automatically injects the Current Working Directory (CWD) context into prompts for the `code` tool.
+
 ## [1.1.0] - 2025-05-13
 
 ### Added
