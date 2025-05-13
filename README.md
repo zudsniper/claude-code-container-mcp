@@ -58,16 +58,27 @@ Or, if `claude` is not in your PATH but you're using the default install locatio
 ```
 Follow the prompts to accept. Once this is done, the MCP server will be able to use the flag non-interactively.
 
-## Connecting to Cursor/Windsurf/Visual Studio Code
+## Connecting to Your MCP Client
 
-After setting up the server, you need to configure your MCP client (like Cursor).
+After setting up the server, you need to configure your MCP client (like Cursor or others that use `mcp.json` or `mcp_config.json`).
 
-### MCP Configuration (`mcp.json`)
+### MCP Configuration File
 
-Locate your `mcp.json` file. Common locations:
-- **macOS:** `~/.cursor/mcp.json` or `~/.codeium/windsurf/mcp_config.json`
-- **Windows:** `%APPDATA%\\Cursor\\mcp.json` or `%APPDATA%\\Codeium\\windsurf\\mcp_config.json`
-- **Linux:** `~/.config/cursor/mcp.json` or `~/.config/.codeium/windsurf/mcp_config.json`
+The configuration is typically done in a JSON file. The name and location can vary depending on your client.
+
+#### For Cursor Users
+
+Cursor typically uses `mcp.json`. Common locations:
+- **macOS:** `~/.cursor/mcp.json`
+- **Windows:** `%APPDATA%\\Cursor\\mcp.json`
+- **Linux:** `~/.config/cursor/mcp.json`
+
+#### For Windsurf (and some VS Code setups)
+
+Clients like Windsurf or certain VS Code integrations might use `mcp_config.json` (or sometimes `mcp.json` in a Codeium-related directory). Common locations:
+- **macOS:** `~/.codeium/windsurf/mcp_config.json` (or `~/.cursor/mcp.json` if Cursor is also used as a generic client)
+- **Windows:** `%APPDATA%\\Codeium\\windsurf\\mcp_config.json` (or `%APPDATA%\\Cursor\\mcp.json`)
+- **Linux:** `~/.config/.codeium/windsurf/mcp_config.json` (or `~/.config/cursor/mcp.json`)
 
 Create this file if it doesn't exist. Add or update the configuration for `claude_code`:
 
