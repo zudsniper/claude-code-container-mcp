@@ -1,6 +1,6 @@
 # Claude Code MCP Server
 
-<img src="assets/agents_in_agents_meme.jpg" alt="Agents in Agents Meme" width="50%">
+<img src="assets/agents_in_agents_meme.jpg" alt="Agents in Agents Meme">
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
 
