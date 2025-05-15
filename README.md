@@ -1,12 +1,12 @@
 # Claude Code MCP Server
 
-![Agents in Agents Meme](assets/agents_in_agents_meme.jpg)
+<img src="assets/agents_in_agents_meme.jpg" alt="Agents in Agents Meme">
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
 
 Did you notice that Cursor sometimes struggles with complex, multi-step edits or operations? This server, with its powerful unified `claude_code` tool, aims to make Claude a more direct and capable agent for your coding tasks.
 
-<img src="assets/screenshot.png" width="600" alt="Screenshot">
+<img src="assets/screenshot.png" width="300" alt="Screenshot">
 
 ## Overview
 
@@ -114,23 +114,23 @@ Executes a prompt directly using the Claude Code CLI with `--dangerously-skip-pe
 
 Here are some visual examples of the server in action:
 
-<img src="assets/claude_tool_git_example.png" alt="Claude Tool Git Example">
+<img src="assets/claude_tool_git_example.png" alt="Claude Tool Git Example" width="50%">
 
-<img src="assets/additional_claude_screenshot.png" alt="Additional Claude Screenshot">
+<img src="assets/additional_claude_screenshot.png" alt="Additional Claude Screenshot" width="50%">
 
-<img src="assets/cursor-screenshot.png" alt="Cursor Screenshot">
+<img src="assets/cursor-screenshot.png" alt="Cursor Screenshot" width="50%">
 
 ### Fixing ESLint Setup
 
 Here's an example of using the Claude Code MCP tool to interactively fix an ESLint setup by deleting old configuration files and creating a new one:
 
-![ESLint file operations example](assets/eslint_example.png)
+<img src="assets/eslint_example.png" alt="ESLint file operations example" width="50%">
 
 ### Listing Files Example
 
 Here's an example of the Claude Code tool listing files in a directory:
 
-![File listing example](assets/file_list_example.png)
+<img src="assets/file_list_example.png" alt="File listing example" width="50%">
 
 ## Key Use Cases
 
