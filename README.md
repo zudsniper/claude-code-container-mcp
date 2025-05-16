@@ -1,6 +1,6 @@
 # Claude Code MCP Server
 
-<img src="assets/agents_in_agents_meme.jpg" alt="Agents in Agents Meme">
+<img src="assets/claude_code_mcp_logo.png" alt="Claude Code MCP Logo">
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
 
@@ -24,6 +24,8 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 - File ops, git, or other operations don't need costy models. Claude Code is pretty cost effective if you sign up for Antropic Max. You can use Gemini or o3 in Max mode and save costs with offloading tasks to cheaper models.
 - Claude has wider system access and can do things that Cursor/Windsurf can't do (or believe they can't), so whenever they are stuck just ask them "use claude code" and it will usually un-stuck them.
 - Agents in Agents rules.
+
+<img src="assets/agents_in_agents_meme.jpg" alt="Agents in Agents Meme">
 
 ## Prerequisites
 
