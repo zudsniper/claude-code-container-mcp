@@ -10,6 +10,10 @@ import * as path from 'path';
 import packageJson from '../package.json' with { type: 'json' }; // Import package.json with attribute
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
+// Track if this is the first tool use for version printing
+let isFirstToolUse = true;
+// Capture server startup time when the module loads
+const serverStartupTime = new Date().toISOString();
 // Dedicated debug logging function
 export function debugLog(message, ...optionalParams) {
     if (debugMode) {
@@ -229,6 +233,12 @@ export class ClaudeCodeServer {
             }
             try {
                 debugLog(`[Debug] Attempting to execute Claude CLI with prompt: "${prompt}" in CWD: "${effectiveCwd}"`);
+                // Print tool info on first use
+                if (isFirstToolUse) {
+                    const versionInfo = `claude_code v${packageJson.version} started at ${serverStartupTime}`;
+                    console.error(versionInfo);
+                    isFirstToolUse = false;
+                }
                 const claudeProcessArgs = [this.claudeCliPath, '--dangerously-skip-permissions', '-p', prompt];
                 debugLog(`[Debug] Invoking /bin/bash with args: ${claudeProcessArgs.join(' ')}`);
                 const { stdout, stderr } = await spawnAsync('/bin/bash', // Explicitly use /bin/bash as the command
