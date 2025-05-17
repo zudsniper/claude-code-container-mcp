@@ -1,6 +1,6 @@
 {
   "name": "@steipete/claude-code-mcp",
-  "version": "1.10.5",
+  "version": "1.10.6",
   "description": "Simple MCP server for Claude Code one-shot execution",
   "author": "Peter Steinberger",
   "license": "MIT",
@@ -9,14 +9,15 @@
     "claude-code-mcp": "dist/server.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node build-bundle.js",
+    "build:tsc": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
-    "test": "npm run build && vitest",
+    "test": "npm run build:tsc && vitest",
     "test:unit": "vitest run --config vitest.config.unit.ts",
-    "test:e2e": "npm run build && vitest run --config vitest.config.e2e.ts",
-    "test:e2e:local": "npm run build && vitest run --config vitest.config.e2e.ts",
-    "test:coverage": "npm run build && vitest --coverage --config vitest.config.unit.ts",
+    "test:e2e": "npm run build:tsc && vitest run --config vitest.config.e2e.ts",
+    "test:e2e:local": "npm run build:tsc && vitest run --config vitest.config.e2e.ts",
+    "test:coverage": "npm run build:tsc && vitest --coverage --config vitest.config.unit.ts",
     "test:watch": "vitest --watch"
   },
   "dependencies": {
@@ -30,10 +31,11 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
+    "@vitest/coverage-v8": "^2.1.8",
+    "esbuild": "^0.25.4",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
-    "vitest": "^2.1.8",
-    "@vitest/coverage-v8": "^2.1.8"
+    "vitest": "^2.1.8"
   },
   "repository": {
     "type": "git",

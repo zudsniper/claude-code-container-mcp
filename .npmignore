@@ -20,6 +20,9 @@ tsconfig.json
 vitest.config.ts
 print-eslint-config.js
 
+# Scripts folder (not needed in published package)
+scripts/
+
 # Documentation that's not needed in package
 docs/
 AGENT.md
@@ -34,3 +37,14 @@ coverage/
 # Temporary files
 test-cli-name.js
 temp/
+
+# Downloaded/extracted packages
+package/
+*.tgz
+
+# Start scripts (not needed with bundled build)
+start.sh
+start.bat
+
+# Build script
+build-bundle.js

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.6] - 2025-05-17
+
+- Bundle all dependencies into server.js using esbuild for standalone execution
+- Remove dependency on start.sh wrapper
+- Fix MCP server transport issues by including all required modules  
+- Smaller package size without start scripts
+
 ## [1.10.5] - 2025-05-17
 
 - Fixed npm bin to point to start.sh instead of directly to dist/server.js for proper execution
