@@ -7,7 +7,10 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve as pathResolve } from 'node:path';
 import * as path from 'path';
-import packageJson from '../package.json' with { type: 'json' }; // Import package.json with attribute
+import { readFileSync } from 'node:fs';
+// Load package.json dynamically
+const packageJsonPath = new URL('../package.json', import.meta.url);
+const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
 // Track if this is the first tool use for version printing
