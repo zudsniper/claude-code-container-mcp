@@ -19,20 +19,15 @@ await esbuild.build({
   banner: {
     js: '#!/usr/bin/env node'
   },
-  external: [
-    'node:*',
-    'path',
-    'fs',
-    'os',
-    'child_process'
-  ],
+  external: [],
   define: {
     'process.env.NODE_ENV': '"production"'
   },
   minify: false,
   sourcemap: false,
   keepNames: true,
-  packages: 'bundle'
+  packages: 'bundle',
+  mainFields: ['module', 'main']
 });
 
 // Clean up temp file

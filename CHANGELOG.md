@@ -5,29 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.7] - 2025-05-17
+
+- Fixed bundling configuration to properly include all native modules
+- Resolved MCP initialization errors in bundled version
+
 ## [1.10.6] - 2025-05-17
 
-- Bundle all dependencies into server.js using esbuild for standalone execution
-- Remove dependency on start.sh wrapper
-- Fix MCP server transport issues by including all required modules  
-- Smaller package size without start scripts
-
-## [1.10.5] - 2025-05-17
-
-- Fixed npm bin to point to start.sh instead of directly to dist/server.js for proper execution
-
-## [1.10.3] - 2025-05-17
-
-- Fixed start.sh to correctly run dist/server.js instead of src/server.ts for npm package
-
-## [1.10.2] - 2025-05-17
-
-- Fix critical startup issue where Node.js CLI was incorrectly run through bash
-- Replace dynamic package.json import with hardcoded version to fix test failures
-- Performance improvement: faster startup by removing dynamic module loading
-
-## [1.10.1] - 2025-05-17
-
+- Runs now from compiled dist, bundled. Faster startup & smaller package size.
 - Tool version and startup time print on first use
 
 ## [1.10.0] - 2025-05-17
