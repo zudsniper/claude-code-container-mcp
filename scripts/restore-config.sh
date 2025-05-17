@@ -19,5 +19,10 @@ else
 fi
 
 echo ""
-echo "📋 Next steps:"
-echo "1. Restart Claude desktop app to apply changes"
+echo "🔄 Restarting Claude to apply changes..."
+osascript -e 'tell application "Claude" to quit'
+sleep 2
+osascript -e 'tell application "Claude" to activate'
+
+echo ""
+echo "✅ Claude has been restarted with original configuration!"
