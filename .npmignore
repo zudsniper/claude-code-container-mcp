@@ -33,3 +33,4 @@ coverage/
 
 # Temporary files
 test-cli-name.js
+temp/
