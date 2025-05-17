@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.12] - 2025-05-17
+
+- Fixed MCP server startup issue by ensuring process runs regardless of module detection
+- Updated server version constant to match package version
+- Simplified entry point logic to prevent early exit
+
+## [1.10.11] - 2025-05-17
+
+- Restored package structure to v1.9.4 configuration after bundling issues
+- Removed bundling approach and dependencies (esbuild)
+- Fixed build by returning to simple TypeScript compilation with tsc
+- Kept ESLint in devDependencies where it belongs
+- Package now works correctly as MCP server again
+
+## [1.10.10] - 2025-05-17
+
+- Restored shipping TypeScript source files alongside compiled JavaScript
+- Returns to the pre-bundling approach of versions 1.5.0-1.9.x
+- Includes src/server.ts, tsconfig.json, and start scripts in package
+- Provides flexibility for users to run or modify the TypeScript version
+
 ## [1.10.9] - 2025-05-17
 
 - Switched from bundling approach to TypeScript compilation like working MCP servers

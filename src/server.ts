@@ -16,7 +16,7 @@ import * as path from 'path';
 import { readFileSync } from 'node:fs';
 
 // Server version - update this when releasing new versions
-const SERVER_VERSION = "1.10.9";
+const SERVER_VERSION = "1.10.12";
 
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
@@ -340,7 +340,5 @@ export class ClaudeCodeServer {
 }
 
 // Create and run the server if this is the main module
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new ClaudeCodeServer();
-  server.run().catch(console.error);
-}
+const server = new ClaudeCodeServer();
+server.run().catch(console.error);
