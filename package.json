@@ -1,6 +1,6 @@
 {
   "name": "@steipete/claude-code-mcp",
-  "version": "1.10.8",
+  "version": "1.10.9",
   "description": "Simple MCP server for Claude Code one-shot execution",
   "author": "Peter Steinberger",
   "license": "MIT",
@@ -9,15 +9,15 @@
     "claude-code-mcp": "dist/server.js"
   },
   "scripts": {
-    "build": "node build-bundle.js",
-    "build:tsc": "tsc",
+    "build": "tsc",
+    "build:bundle": "node build-bundle.js",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
-    "test": "npm run build:tsc && vitest",
+    "test": "npm run build && vitest",
     "test:unit": "vitest run --config vitest.config.unit.ts",
-    "test:e2e": "npm run build:tsc && vitest run --config vitest.config.e2e.ts",
-    "test:e2e:local": "npm run build:tsc && vitest run --config vitest.config.e2e.ts",
-    "test:coverage": "npm run build:tsc && vitest --coverage --config vitest.config.unit.ts",
+    "test:e2e": "npm run build && vitest run --config vitest.config.e2e.ts",
+    "test:e2e:local": "npm run build && vitest run --config vitest.config.e2e.ts",
+    "test:coverage": "npm run build && vitest --coverage --config vitest.config.unit.ts",
     "test:watch": "vitest --watch"
   },
   "dependencies": {

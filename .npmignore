@@ -41,10 +41,10 @@ temp/
 # Downloaded/extracted packages
 package/
 *.tgz
+comparison-repo/
+temp-1.10.7/
+temp-1.10.8/
 
-# Start scripts (not needed with bundled build)
+# Start scripts (not needed in published package)
 start.sh
 start.bat
-
-# Build script
-build-bundle.js

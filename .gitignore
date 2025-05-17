@@ -11,6 +11,7 @@ dist/
 *.tgz
 package/
 temp-inspect/
+comparison-repo/
 
 # Environment files
 .env
