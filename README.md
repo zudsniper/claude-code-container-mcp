@@ -1,6 +1,6 @@
 # Claude Code MCP Server
 
-[![npm package](https://img.shields.io/npm/v/claude-code-mcp)](https://npmjs.com/package/claude-code-mcp)
+[![npm package](https://img.shields.io/npm/v/@steipete/claude-code-mcp)](https://www.npmjs.com/package/@steipete/claude-code-mcp)
 [![View changelog](https://img.shields.io/badge/Explore%20Changelog-brightgreen)](/CHANGELOG.md)
 
 <img src="assets/claude_code_mcp_logo.png" alt="Claude Code MCP Logo">
