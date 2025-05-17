@@ -7,10 +7,8 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve as pathResolve } from 'node:path';
 import * as path from 'path';
-import { readFileSync } from 'node:fs';
-// Load package.json dynamically
-const packageJsonPath = new URL('../package.json', import.meta.url);
-const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+// Server version - update this when releasing new versions
+const SERVER_VERSION = "1.10.1";
 // Define debugMode globally using const
 const debugMode = process.env.MCP_CLAUDE_DEBUG === 'true';
 // Track if this is the first tool use for version printing
@@ -118,7 +116,7 @@ export class ClaudeCodeServer {
         // Use the simplified findClaudeCli function
         this.claudeCliPath = findClaudeCli(); // Removed debugMode argument
         console.error(`[Setup] Using Claude CLI command/path: ${this.claudeCliPath}`);
-        this.packageVersion = packageJson.version; // Access version directly
+        this.packageVersion = SERVER_VERSION;
         this.server = new Server({
             name: 'claude_code',
             version: '1.0.0',
@@ -238,14 +236,14 @@ export class ClaudeCodeServer {
                 debugLog(`[Debug] Attempting to execute Claude CLI with prompt: "${prompt}" in CWD: "${effectiveCwd}"`);
                 // Print tool info on first use
                 if (isFirstToolUse) {
-                    const versionInfo = `claude_code v${packageJson.version} started at ${serverStartupTime}`;
+                    const versionInfo = `claude_code v${SERVER_VERSION} started at ${serverStartupTime}`;
                     console.error(versionInfo);
                     isFirstToolUse = false;
                 }
-                const claudeProcessArgs = [this.claudeCliPath, '--dangerously-skip-permissions', '-p', prompt];
-                debugLog(`[Debug] Invoking /bin/bash with args: ${claudeProcessArgs.join(' ')}`);
-                const { stdout, stderr } = await spawnAsync('/bin/bash', // Explicitly use /bin/bash as the command
-                claudeProcessArgs, // Pass the script path as the first argument to bash
+                const claudeProcessArgs = ['--dangerously-skip-permissions', '-p', prompt];
+                debugLog(`[Debug] Invoking Claude CLI: ${this.claudeCliPath} ${claudeProcessArgs.join(' ')}`);
+                const { stdout, stderr } = await spawnAsync(this.claudeCliPath, // Run the Claude CLI directly
+                claudeProcessArgs, // Pass the arguments
                 { timeout: executionTimeoutMs, cwd: effectiveCwd });
                 debugLog('[Debug] Claude CLI stdout:', stdout.trim());
                 if (stderr) {
