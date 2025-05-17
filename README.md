@@ -1,5 +1,8 @@
 # Claude Code MCP Server
 
+[![npm package](https://img.shields.io/npm/v/claude-code-mcp)](https://npmjs.com/package/claude-code-mcp)
+[![View changelog](https://img.shields.io/badge/Explore%20Changelog-brightgreen)](/CHANGELOG.md)
+
 <img src="assets/claude_code_mcp_logo.png" alt="Claude Code MCP Logo">
 
 An MCP (Model Context Protocol) server that allows running Claude Code in one-shot mode with permissions bypassed automatically.
