@@ -32,6 +32,28 @@ This MCP server provides one tool that can be used by LLMs to interact with Clau
 - Node.js v20 or later (Use fnm or nvm to install)
 - Claude CLI installed locally (run it and call /doctor) and `-dangerously-skip-permissions` accepted.
 
+## Configuration
+
+### Environment Variables
+
+- `CLAUDE_CLI_NAME`: Override the Claude CLI binary name or provide an absolute path (default: `claude`). This allows you to use a custom Claude CLI binary. This is useful for:
+  - Using custom Claude CLI wrappers
+  - Testing with mocked binaries
+  - Running multiple Claude CLI versions side by side
+  
+  Supported formats:
+  - Simple name: `CLAUDE_CLI_NAME=claude-custom` or `CLAUDE_CLI_NAME=claude-v2`
+  - Absolute path: `CLAUDE_CLI_NAME=/path/to/custom/claude`
+  
+  Relative paths (e.g., `./claude` or `../claude`) are not allowed and will throw an error.
+  
+  When set to a simple name, the server will look for the specified binary in:
+  1. The system PATH (instead of the default `claude` command)
+  
+  Note: The local user installation path (`~/.claude/local/claude`) will still be checked but only for the default `claude` binary.
+
+- `MCP_CLAUDE_DEBUG`: Enable debug logging (set to `true` for verbose output)
+
 ## Installation & Usage
 
 The recommended way to use this server is by installing it by using `npx`.
@@ -43,6 +65,21 @@ The recommended way to use this server is by installing it by using `npx`.
         "-y",
         "@steipete/claude-code-mcp@latest"
       ]
+    },
+```
+
+To use a custom Claude CLI binary name, you can specify the environment variable:
+
+```json
+    "claude-code-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@steipete/claude-code-mcp@latest"
+      ],
+      "env": {
+        "CLAUDE_CLI_NAME": "claude-custom"
+      }
     },
 ```
 
@@ -194,6 +231,32 @@ This example illustrates `claude_code` handling a more complex, multi-step task,
 **For Developers: Local Setup & Contribution**
 
 If you want to develop or contribute to this server, or run it from a cloned repository for testing, please see our [Local Installation & Development Setup Guide](./docs/local_install.md).
+
+## Testing
+
+The project includes comprehensive test suites:
+
+```bash
+# Run all tests
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run e2e tests (with mocks)
+npm run test:e2e
+
+# Run e2e tests locally (requires Claude CLI)
+npm run test:e2e:local
+
+# Watch mode for development
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
+```
+
+For detailed testing documentation, see our [E2E Testing Guide](./docs/e2e-testing.md).
 
 ## Configuration via Environment Variables
 
