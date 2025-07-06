@@ -53,6 +53,9 @@
   "bugs": {
     "url": "https://github.com/democratize-technology/claude-code-mcp/issues"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "README.md",
