@@ -1,0 +1,61 @@
+# CI/CD Integration Example
+# GitHub Actions workflow using Claude Code MCP
+
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+    
+    - name: Install Claude Code MCP
+      run: |
+        npm install -g @democratize-technology/claude-code-container-mcp
+    
+    - name: Start Docker
+      run: |
+        sudo systemctl start docker
+        sudo chmod 666 /var/run/docker.sock
+    
+    - name: AI Code Review
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        # Start MCP server in background
+        claude-code-container-mcp &
+        MCP_PID=$!
+        sleep 5
+        
+        # Create review session
+        SESSION_ID=$(npx mcp-client call create_session \
+          --projectPath "$GITHUB_WORKSPACE" \
+          --sessionName "pr-review-${{ github.event.pull_request.number }}")
+        
+        # Perform code review
+        REVIEW=$(npx mcp-client call execute_in_session \
+          --sessionId "$SESSION_ID" \
+          --prompt "Review the changes in this pull request for:
+            1. Security vulnerabilities
+            2. Performance issues
+            3. Code quality and best practices
+            4. Potential bugs
+            Provide specific line-by-line feedback.")
+        
+        # Post review as comment
+        echo "$REVIEW" > review.md
+        gh pr comment ${{ github.event.pull_request.number }} --body-file review.md
+        
+        # Cleanup
+        npx mcp-client call destroy_session --sessionId "$SESSION_ID"
+        kill $MCP_PID

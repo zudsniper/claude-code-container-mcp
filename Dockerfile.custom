@@ -1,0 +1,43 @@
+# claude-code-custom:latest
+# Custom base image for Claude Code Container MCP Server
+# Reduces dependency on external images
+
+FROM node:20-slim AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    ca-certificates \
+    sudo \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create claude user with sudo permissions
+RUN useradd -m -s /bin/bash claude && \
+    echo "claude ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Set up working directory
+WORKDIR /workspace
+
+# Install Claude Code CLI globally (latest version)
+RUN npm install -g @anthropic-ai/claude-code@latest
+
+# Create necessary directories
+RUN mkdir -p /home/claude/.claude && \
+    chown -R claude:claude /home/claude
+
+# Switch to claude user
+USER claude
+
+# Set environment variables
+ENV CLAUDE_HOME=/home/claude/.claude
+ENV NODE_ENV=production
+
+# Entry point script
+COPY --chown=claude:claude docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["claude"]

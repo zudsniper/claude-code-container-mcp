@@ -22,10 +22,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        # Always use fresh install on CI to avoid platform-specific issues
+        rm -rf node_modules package-lock.json
+        npm install
 
     - name: Build project
       run: npm run build

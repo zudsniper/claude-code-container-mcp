@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-07-06
+
+### Added
+- Complete Docker-based containerization system
+- Multi-session management capabilities
+- AWS Bedrock integration support
+- Session lifecycle management (create, execute, destroy)
+- File transfer in/out of containers
+- Container command execution
+- Session logging and monitoring
+- MCP server directory mounting
+- Enterprise-ready features and examples
+
+### Changed
+- **BREAKING**: Complete architectural transformation from CLI wrapper to container manager
+- Migrated from single `claude_code` tool to multiple specialized tools
+- Enhanced security through container isolation
+- Improved error handling and session recovery
+
+### Removed
+- Original `server.ts` CLI wrapper implementation
+- Direct Claude CLI execution model
+
+## [Unreleased] - 2025-07-03
+
+### Added
+- Custom Docker image to reduce external dependencies
+- Comprehensive security documentation (SECURITY.md)
+- Contributing guidelines (CONTRIBUTING.md)
+- Issue templates for bugs, features, and security reports
+- Real-world usage examples (multi-session, enterprise, CI/CD)
+- Feature comparison table with other solutions
+- Roadmap for future development
+- Support section with links to documentation and discussions
+
+### Changed
+- Enhanced README with clearer value proposition emphasizing MCP orchestration
+- Updated acknowledgments section for open source community
+- Improved security warnings and best practices
+- Better documentation of AWS Bedrock configuration
+
+### Security
+- Added prominent Docker daemon access warnings
+- Documented security best practices and threat model
+- Added vulnerability reporting process
+
+## [2.0.0] - 2025-06-30
+
+### Added
+- Forked from steipete/claude-code-mcp
+- Containerization support for Claude Code sessions
+- Session management tools (create, execute, destroy)
+- AWS Bedrock support for enterprise deployments
+- File transfer capabilities between host and container
+- Session logging and debugging tools
+
+### Changed
+- Architecture now uses Docker containers for isolation
+- Multiple concurrent sessions support
+- Enhanced security through container isolation
+
 ## [1.10.12] - 2025-05-17
 
 - Fixed MCP server startup issue by ensuring process runs regardless of module detection

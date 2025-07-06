@@ -1,6 +1,9 @@
 # Node modules
 node_modules/
 
+# Package lock file (causes platform-specific issues in CI)
+package-lock.json
+
 # macOS specific
 .DS_Store
 
@@ -24,3 +27,29 @@ coverage/
 # IDE
 .vscode/
 .idea/
+
+# Security
+*.key
+*.pem
+*.crt
+*.p12
+credentials.json
+secrets.yml
+
+# Logs
+*.log
+logs/
+audit/
+
+# Test artifacts
+test-results/
+*.test.json
+
+# Docker
+.dockerignore.local
+docker-compose.override.yml
+
+# Temporary files
+*.tmp
+*.bak
+*~

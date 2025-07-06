@@ -1,0 +1,45 @@
+FROM ghcr.io/zeeno-atl/claude-code:latest
+
+# Install dependencies as root
+RUN apt-get update && apt-get install -y jq curl sudo && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user with UID/GID 1000
+RUN groupadd -g 1000 claude && \
+    useradd -m -u 1000 -g claude -s /bin/bash claude && \
+    echo "claude ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Copy MCP wrapper and make it executable
+COPY mcp-wrapper.sh /mcp-wrapper.sh
+RUN chmod +x /mcp-wrapper.sh
+
+# Update claude-wrapper.sh permissions
+COPY claude-wrapper.sh /claude-wrapper.sh
+RUN chmod +x /claude-wrapper.sh || true
+
+# Switch to non-root user
+USER claude
+WORKDIR /app
+
+# Create necessary directories with proper ownership
+RUN mkdir -p /home/claude/.local/bin /home/claude/.npm-global /home/claude/.cargo /home/claude/.local && \
+    chown -R claude:claude /home/claude
+
+# Install uv as root but in the user's directory
+# USER root
+RUN curl -LsSf https://astral.sh/uv/install.sh | CARGO_HOME=/home/claude/.cargo sh && \
+    chown -R claude:claude /home/claude/.cargo /home/claude/.local
+
+# Create .claude.json directory with proper permissions
+RUN mkdir -p /home/claude && \
+    touch /home/claude/.claude.json && \
+    chown -R claude:claude /home/claude
+
+# Set PATH for the non-root user
+ENV PATH="/home/claude/.local/bin:/home/claude/.cargo/bin:${PATH}"
+ENV npm_config_prefix="/home/claude/.npm-global"
+
+# Set it as the entrypoint
+ENTRYPOINT ["/mcp-wrapper.sh"]
+
+# Keep original CMD
+CMD ["tail", "-f", "/dev/null"]
