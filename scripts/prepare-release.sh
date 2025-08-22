@@ -27,7 +27,7 @@ fi
 
 # Pull latest changes
 echo "📥 Pulling latest changes..."
-git pull
+git pull --ff-only
 
 # Get current version
 CURRENT_VERSION=$(node -p "require('./package.json').version")
