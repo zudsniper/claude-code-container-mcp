@@ -70,7 +70,20 @@ echo "✨ New version: $NEW_VERSION"
 echo ""
 echo "📝 Please update CHANGELOG.md with changes for v$NEW_VERSION"
 echo "Opening CHANGELOG.md in your default editor..."
+echo "Opening CHANGELOG.md in your default editor..."
+# Record changelog modification time before editing
+CHANGELOG_MTIME_BEFORE=$(stat -c %Y CHANGELOG.md)
 ${EDITOR:-nano} CHANGELOG.md
+# Record changelog modification time after editing
+CHANGELOG_MTIME_AFTER=$(stat -c %Y CHANGELOG.md)
+if [ "$CHANGELOG_MTIME_AFTER" -le "$CHANGELOG_MTIME_BEFORE" ]; then
+    echo "⚠️  CHANGELOG.md does not appear to have been modified."
+    read -p "Proceed anyway? (y/N): " CHANGELOG_CONFIRM
+    if [ "$CHANGELOG_CONFIRM" != "y" ]; then
+        echo "Please update CHANGELOG.md before continuing."
+        exit 1
+    fi
+fi
 
 # Ask to confirm
 echo ""
