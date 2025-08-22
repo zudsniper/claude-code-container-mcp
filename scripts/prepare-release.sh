@@ -113,7 +113,20 @@ git checkout -B release
 
 # Push to trigger workflow
 echo "🚀 Pushing to release branch..."
-git push origin release --force-with-lease
+git push origin release
+PUSH_EXIT_CODE=$?
+if [ $PUSH_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "⚠️  Regular push to 'release' branch failed."
+    echo "This may be because the remote 'release' branch has changes that you do not have locally."
+    read -p "Do you want to force push and potentially overwrite remote changes? (y/N): " FORCE_CONFIRM
+    if [ "$FORCE_CONFIRM" = "y" ]; then
+        git push origin release --force-with-lease
+    else
+        echo "Aborting release preparation. Please resolve remote changes and try again."
+        exit 1
+    fi
+fi
 
 echo ""
 echo "✅ Release preparation complete!"
