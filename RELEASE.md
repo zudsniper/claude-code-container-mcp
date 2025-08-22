@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes the release process for claude-code-mcp to ensure quality and prevent issues like the package.json import problem.
+This document describes the release process for claude-code-container-mcp. The project uses automated CI/CD workflows for publishing to npm and Docker Hub.
 
 ## Pre-release Testing
 
@@ -28,7 +28,43 @@ This document describes the release process for claude-code-mcp to ensure qualit
 
 ## Publishing a Release
 
-Once local testing is complete:
+### Automated Release (Recommended)
+
+Use the automated workflow by pushing to the `release` branch:
+
+```bash
+# Use the prepare script for guided release
+./scripts/prepare-release.sh
+```
+
+Or manually:
+
+```bash
+# 1. Update version
+npm version patch  # or minor/major
+
+# 2. Update CHANGELOG.md
+$EDITOR CHANGELOG.md
+
+# 3. Commit changes
+git add package.json package-lock.json CHANGELOG.md
+git commit -m "chore: prepare release vX.Y.Z"
+
+# 4. Push to release branch
+git checkout -B release
+git push origin release
+```
+
+The GitHub Actions workflow will automatically:
+1. Verify the version is new
+2. Run all tests
+3. Publish to npm
+4. Build and push Docker images (3 images)
+5. Create GitHub release with changelog
+
+### Manual Release (Emergency Only)
+
+If automation fails, use the manual script:
 
 ```bash
 ./scripts/publish-release.sh
@@ -45,12 +81,23 @@ This will:
 8. Create GitHub release
 9. Publish to npm
 
+## CI/CD Setup
+
+Before using automated releases, configure GitHub secrets:
+
+1. **NPM_TOKEN**: Get from [npmjs.com](https://www.npmjs.com/) → Access Tokens
+2. **DOCKERHUB_USERNAME**: Your Docker Hub username
+3. **DOCKERHUB_TOKEN**: Get from [Docker Hub](https://hub.docker.com/) → Security → Access Tokens
+
+See [docs/SETUP_DEPLOYMENT_WORKFLOWS.md](docs/SETUP_DEPLOYMENT_WORKFLOWS.md) for detailed setup instructions.
+
 ## Emergency Fixes
 
 For critical fixes:
 1. Fix the issue
 2. Test locally with `./scripts/test-release.sh`
-3. Once verified, use `./scripts/publish-release.sh` with patch version
+3. Once verified, use automated release via `./scripts/prepare-release.sh`
+4. If automation fails, use manual `./scripts/publish-release.sh` with patch version
 
 ## Version Guidelines
 

@@ -113,6 +113,59 @@ This enables:
 - **CI/CD integration**: Automated code reviews and testing
 - **Enterprise automation**: Bulk operations across projects
 
+## Installation
+
+### Prerequisites
+
+- Node.js v20 or later
+- Docker installed and running
+- Either:
+  - Anthropic API key, OR
+  - AWS credentials with Bedrock access
+
+### Quick Install
+
+#### Using npm (Recommended)
+
+```bash
+npm install -g @democratize-technology/claude-code-container-mcp
+```
+
+#### Using Docker
+
+```bash
+docker pull democratizetechnology/claude-code-container-mcp:latest
+docker run -d \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e ANTHROPIC_API_KEY="your-api-key" \
+  democratizetechnology/claude-code-container-mcp:latest
+```
+
+#### From Source
+
+```bash
+git clone https://github.com/democratize-technology/claude-code-container-mcp.git
+cd claude-code-container-mcp
+npm install
+npm run build
+npm start
+```
+
+### Building the Custom Claude Code Image
+
+For reduced external dependencies, build the custom Docker image:
+
+```bash
+# Clone the repository (if not already done)
+git clone https://github.com/democratize-technology/claude-code-container-mcp.git
+cd claude-code-container-mcp
+
+# Build the custom image
+./scripts/build-custom-image.sh
+
+# This creates: claude-code-custom:latest
+```
+
 ## 🔒 Security Considerations
 
 ### Docker Daemon Access Required
@@ -126,7 +179,7 @@ This MCP server requires access to the Docker daemon, which has significant secu
 
 1. **Run the MCP server in a container** (double isolation):
    ```bash
-   docker run -v /var/run/docker.sock:/var/run/docker.sock claude-code-mcp
+   docker run -v /var/run/docker.sock:/var/run/docker.sock democratizetechnology/claude-code-container-mcp
    ```
 
 2. **Use Docker security options**:
@@ -141,82 +194,74 @@ This MCP server requires access to the Docker daemon, which has significant secu
 
 For maximum security, consider running this in a dedicated VM or container host.
 
-## Prerequisites
-
-- Node.js v20 or later
-- Docker installed and running
-- Either:
-  - Anthropic API key, OR
-  - AWS credentials with Bedrock access
-
-### Building the Custom Claude Code Image
-
-To reduce external dependencies, we provide a custom Docker image:
-
-```bash
-# Build the custom image
-./scripts/build-custom-image.sh
-
-# This creates: claude-code-custom:latest
-```
-
-## Installation
-
-### From Source (currently required)
-
-```bash
-git clone https://github.com/democratize-technology/claude-code-container-mcp.git
-cd claude-code-container-mcp
-npm install
-npm run build
-```
-
-<!--
-### Using npm (coming soon)
-
-```bash
-npm install -g @democratize-technology/claude-code-container-mcp
-```
-
-### Using Docker (coming soon)
-
-```bash
-docker pull ghcr.io/democratize-technology/claude-code-container-mcp:latest
-```
--->
-
 ## Configuration
 
-### For Claude Desktop
+### Quick Configuration for Claude Desktop
 
-#### Option 1: Using Anthropic API
+Add to your Claude Desktop configuration file:
+
+#### macOS
+`~/Library/Application Support/Claude/claude_desktop_config.json`
+
+#### Windows
+`%APPDATA%\Claude\claude_desktop_config.json`
+
+#### Linux
+`~/.config/Claude/claude_desktop_config.json`
+
+### Configuration Examples
+
+#### Standard Configuration (with Anthropic API)
 
 ```json
 {
-  "claude-code-container": {
-    "command": "node",
-    "args": ["/path/to/claude-code-mcp/dist/container-server.js"],
-    "env": {
-      "ANTHROPIC_API_KEY": "your-api-key"
+  "mcpServers": {
+    "claude-code-container": {
+      "command": "npx",
+      "args": ["-y", "@democratize-technology/claude-code-container-mcp"],
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key-here"
+      }
     }
   }
 }
 ```
 
-#### Option 2: Using AWS Bedrock
+#### AWS Bedrock Configuration
 
 ```json
 {
-  "claude-code-container": {
-    "command": "node",
-    "args": ["/path/to/claude-code-mcp/dist/container-server.js"],
-    "env": {
-      "CLAUDE_CODE_USE_BEDROCK": "1",
-      "AWS_REGION": "us-east-1",
-      "AWS_ACCESS_KEY_ID": "your-access-key",
-      "AWS_SECRET_ACCESS_KEY": "your-secret-key",
-      "ANTHROPIC_MODEL": "us.anthropic.claude-opus-4-20250514-v1:0",
-      "ANTHROPIC_SMALL_FAST_MODEL": "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+  "mcpServers": {
+    "claude-code-container": {
+      "command": "npx",
+      "args": ["-y", "@democratize-technology/claude-code-container-mcp"],
+      "env": {
+        "CLAUDE_CODE_USE_BEDROCK": "1",
+        "AWS_REGION": "us-east-1",
+        "AWS_ACCESS_KEY_ID": "your-access-key",
+        "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+        "ANTHROPIC_MODEL": "us.anthropic.claude-opus-4-20250514-v1:0",
+        "ANTHROPIC_SMALL_FAST_MODEL": "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+      }
+    }
+  }
+}
+```
+
+#### Local Development Configuration
+
+If you're developing or have installed from source:
+
+```json
+{
+  "mcpServers": {
+    "claude-code-container": {
+      "command": "node",
+      "args": ["/path/to/claude-code-container-mcp/dist/container-server.js"],
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key",
+        "MCP_CLAUDE_DEBUG": "true"
+      }
     }
   }
 }
@@ -550,6 +595,42 @@ export DEFAULT_CLAUDE_IMAGE=ghcr.io/zeeno-atl/claude-code:latest
 - The container runs with your user ID to prevent permission problems
 - Ensure the project path is accessible
 - Check Docker socket permissions
+
+## Development
+
+### Setting Up Development Environment
+
+```bash
+# Clone the repository
+git clone https://github.com/democratize-technology/claude-code-container-mcp.git
+cd claude-code-container-mcp
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+
+# Start in development mode
+npm run dev
+```
+
+### Release Process
+
+This project uses automated CI/CD for releases. To create a new release:
+
+1. Update version in `package.json`
+2. Update `CHANGELOG.md`
+3. Push to the `release` branch
+4. GitHub Actions will automatically:
+   - Publish to npm
+   - Build and push Docker images
+   - Create a GitHub release
+
+For detailed deployment setup, see [docs/SETUP_DEPLOYMENT_WORKFLOWS.md](docs/SETUP_DEPLOYMENT_WORKFLOWS.md).
 
 ## Contributing
 
