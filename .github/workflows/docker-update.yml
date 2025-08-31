@@ -1,0 +1,126 @@
+name: Docker Update
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile*'
+      - '.dockerignore'
+      - 'docker/**'
+      - 'docker-entrypoint.sh'
+      - 'mcp-wrapper.sh'
+      - 'claude-wrapper.sh'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Custom tag for Docker images (default: dev)'
+        required: false
+        default: 'dev'
+
+env:
+  DOCKER_ORG: democratizetechnology
+
+jobs:
+  build-docker-dev:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - name: claude-code-container-mcp
+            dockerfile: Dockerfile
+            context: .
+          - name: claude-code-custom
+            dockerfile: Dockerfile.custom
+            context: .
+          - name: claude-code-mcp
+            dockerfile: Dockerfile.mcp
+            context: .
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Get commit SHA
+        id: sha
+        run: echo "sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      - name: Determine tags
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="dev"
+          fi
+          
+          # Always include dev and dev-{sha} tags, plus custom tag if specified
+          TAGS="${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:${TAG}"
+          if [ "$TAG" != "dev" ]; then
+            TAGS="${TAGS},${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:dev"
+          fi
+          TAGS="${TAGS},${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:dev-${{ steps.sha.outputs.sha }}"
+          
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "main-tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_ORG }}/${{ matrix.image.name }}
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.image.name }}
+            org.opencontainers.image.description=Development build of ${{ matrix.image.name }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output image info
+        run: |
+          echo "✅ Built and pushed ${{ matrix.image.name }}"
+          echo "🏷️  Tags: ${{ steps.tags.outputs.tags }}"
+
+  notify-completion:
+    runs-on: ubuntu-latest
+    needs: build-docker-dev
+    if: success()
+    steps:
+      - name: Success notification
+        run: |
+          echo "✅ Docker development images updated successfully!"
+          echo "🐳 Updated images:"
+          echo "  - ${{ env.DOCKER_ORG }}/claude-code-container-mcp:dev"
+          echo "  - ${{ env.DOCKER_ORG }}/claude-code-custom:dev"
+          echo "  - ${{ env.DOCKER_ORG }}/claude-code-mcp:dev"
+          echo "📋 All images also tagged with commit SHA for traceability"
+
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: build-docker-dev
+    if: failure()
+    steps:
+      - name: Failure notification
+        run: |
+          echo "❌ Docker image build failed"
+          echo "Check the workflow logs for details"
+          exit 1
