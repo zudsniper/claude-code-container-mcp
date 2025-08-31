@@ -11,8 +11,7 @@ on:
         default: ''
 
 env:
-  DOCKER_ORG: democratizetechnology
-  NPM_PACKAGE: '@democratize-technology/claude-code-container-mcp'
+  NPM_PACKAGE: 'claude-code-container-mcp'
 
 jobs:
   check-version:
@@ -130,7 +129,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_ORG }}/${{ matrix.image.name }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}
           tags: |
             type=raw,value=latest
             type=raw,value=${{ needs.check-version.outputs.version }}
@@ -182,9 +181,9 @@ jobs:
           echo "" >> release_notes.md
           echo "## Docker Images" >> release_notes.md
           echo "" >> release_notes.md
-          echo "- \`${{ env.DOCKER_ORG }}/claude-code-container-mcp:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
-          echo "- \`${{ env.DOCKER_ORG }}/claude-code-custom:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
-          echo "- \`${{ env.DOCKER_ORG }}/claude-code-mcp:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
+          echo "- \`${{ secrets.DOCKERHUB_USERNAME }}/claude-code-container-mcp:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
+          echo "- \`${{ secrets.DOCKERHUB_USERNAME }}/claude-code-custom:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
+          echo "- \`${{ secrets.DOCKERHUB_USERNAME }}/claude-code-mcp:${{ needs.check-version.outputs.version }}\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "## NPM Package" >> release_notes.md
           echo "" >> release_notes.md
@@ -211,9 +210,9 @@ jobs:
           echo "✅ Release v${{ needs.check-version.outputs.version }} completed successfully!"
           echo "📦 NPM: ${{ env.NPM_PACKAGE }}@${{ needs.check-version.outputs.version }}"
           echo "🐳 Docker images:"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-container-mcp:${{ needs.check-version.outputs.version }}"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-custom:${{ needs.check-version.outputs.version }}"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-mcp:${{ needs.check-version.outputs.version }}"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-container-mcp:${{ needs.check-version.outputs.version }}"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-custom:${{ needs.check-version.outputs.version }}"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-mcp:${{ needs.check-version.outputs.version }}"
 
   notify-skipped:
     runs-on: ubuntu-latest

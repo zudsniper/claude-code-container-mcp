@@ -1,5 +1,5 @@
 {
-  "name": "@democratize-technology/claude-code-container-mcp",
+  "name": "claude-code-container-mcp",
   "version": "3.0.0",
   "description": "MCP server for containerized Claude Code session management",
   "author": "democratize-technology (forked from Peter Steinberger)",
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/democratize-technology/claude-code-mcp.git"
+    "url": "git+https://github.com/zudsniper/claude-code-container-mcp.git"
   },
   "keywords": [
     "mcp",
@@ -51,7 +51,7 @@
     "container"
   ],
   "bugs": {
-    "url": "https://github.com/democratize-technology/claude-code-mcp/issues"
+    "url": "https://github.com/zudsniper/claude-code-container-mcp/issues"
   },
   "publishConfig": {
     "access": "public"
@@ -62,5 +62,5 @@
     "LICENSE",
     "CHANGELOG.md"
   ],
-  "homepage": "https://github.com/democratize-technology/claude-code-mcp#readme"
+  "homepage": "https://github.com/zudsniper/claude-code-container-mcp#readme"
 }
