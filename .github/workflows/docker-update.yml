@@ -18,7 +18,7 @@ on:
         default: 'dev'
 
 env:
-  DOCKER_ORG: democratizetechnology
+  # DOCKER_ORG will be dynamically set from DOCKERHUB_USERNAME secret
 
 jobs:
   build-docker-dev:
@@ -62,11 +62,11 @@ jobs:
           fi
           
           # Always include dev and dev-{sha} tags, plus custom tag if specified
-          TAGS="${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:${TAG}"
+          TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:${TAG}"
           if [ "$TAG" != "dev" ]; then
-            TAGS="${TAGS},${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:dev"
+            TAGS="${TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:dev"
           fi
-          TAGS="${TAGS},${{ env.DOCKER_ORG }}/${{ matrix.image.name }}:dev-${{ steps.sha.outputs.sha }}"
+          TAGS="${TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}:dev-${{ steps.sha.outputs.sha }}"
           
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "main-tag=${TAG}" >> $GITHUB_OUTPUT
@@ -75,7 +75,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_ORG }}/${{ matrix.image.name }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}
           tags: ${{ steps.tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=${{ matrix.image.name }}
@@ -109,9 +109,9 @@ jobs:
         run: |
           echo "✅ Docker development images updated successfully!"
           echo "🐳 Updated images:"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-container-mcp:dev"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-custom:dev"
-          echo "  - ${{ env.DOCKER_ORG }}/claude-code-mcp:dev"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-container-mcp:dev"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-custom:dev"
+          echo "  - ${{ secrets.DOCKERHUB_USERNAME }}/claude-code-mcp:dev"
           echo "📋 All images also tagged with commit SHA for traceability"
 
   notify-failure:
