@@ -1,6 +1,6 @@
 {
   "name": "claude-code-container-mcp",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "MCP server for containerized Claude Code session management",
   "author": "democratize-technology (forked from Peter Steinberger)",
   "license": "MIT",
