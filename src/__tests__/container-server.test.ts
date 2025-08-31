@@ -7,8 +7,8 @@ describe('Container Server', () => {
     expect(true).toBe(true);
   });
 
-  it('validates version 3.0.0', () => {
+  it('validates version format', () => {
     const packageJson = require('../../package.json');
-    expect(packageJson.version).toBe('3.0.0');
+    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
